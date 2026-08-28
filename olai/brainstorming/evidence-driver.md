@@ -9,23 +9,24 @@
 ```bash
 # Own flake — nothing registered on the root flake. From any worktree:
 
-nix run ./evidence -- --section ./my-evidence.ts --shots ./shots
-nix run ./evidence -- --store ~/.claude --section ./my-evidence.ts --shots ./shots
-nix run ./evidence -- --section ./my-evidence.ts --video ./shots/resume.mp4
-nix run ./evidence -- --store ~/.claude --hold          # serve, poke by hand, Ctrl-C
+nix run ./evidence -- ./my-evidence.ts                     # fixture vault, run section
+nix run ./evidence -- --store ~/.claude ./my-evidence.ts   # real Claude store
+nix run ./evidence -- --store ~/.claude                    # no section = just serve; Ctrl-C
 ```
 
 ```
-nix run ./evidence -- [flags]
+nix run ./evidence -- [--vault <dir>] [--store <dir>] [section.ts]
 
-  --section <file.ts>   worktree-local section module (throwaway)
-  --vault <dir>         .olai directory to serve      [default: evidence/host/fixtures/small]
-  --store <dir>         Claude session store; copied to scratch HOME, transcript
-                        cwds rewritten to the served vault (the sameDirectory rule)
-  --shots <dir>         screenshot destination         [default: ./shots]
-  --video <file.mp4>    record instead of stills
-  --hold                serve and wait; no section
-  --port <n>            pin a port                     [default: 0]
+  section.ts     worktree-local section module (throwaway). Absent: serve and hold.
+  --vault <dir>  .olai directory to serve   [default: evidence/host/fixtures/small]
+  --store <dir>  Claude session store; copied to scratch HOME, transcript cwds
+                 rewritten to the served vault (the sameDirectory rule)
+
+Not flags, on purpose:
+  shots  → always ./shots (the section names each one)
+  video  → the section's call: `export const record = true` films the run
+  port   → always ephemeral; the bound URL is printed
+  hold   → the absence of a section
 
 exit 0  section done          exit 2  boot failed (full server log printed)
 exit 1  section threw (log tail printed, shots-so-far kept)
@@ -40,7 +41,7 @@ always: own processes dead, scratch HOME removed
  A  evidence/drive.sh             flags, composition, teardown trap
  A  evidence/lib/drive.ts         readiness → { page, shot, serverLog } → section import
  A  evidence/lib/store.sh         store copy, cwd rewrite, adapter env (#417's plumbing)
- A  evidence/lib/video.ts         --video engine (absorbs paneVideo's approach, no import)
+ A  evidence/lib/video.ts         filming, when a section says `export const record = true`
  A  evidence/sections/example.ts  the starting point a lane copies
  A  evidence/host/serve.sh        ★ the ONE olai-specific file: how THIS app boots
  A  evidence/host/fixtures/small/ tiny default vault
@@ -135,7 +136,7 @@ export default async ({ page, shot }: Drive) => {
 ## UX flow
 
 ```
-$ nix run ./evidence -- --store ~/.claude --section ./my-evidence.ts --shots ./shots
+$ nix run ./evidence -- --store ~/.claude ./my-evidence.ts
 drive: client → built (cached)
 drive: store  → /tmp/drive-h4Xk/home/.claude    (33 sessions, cwd → /tmp/drive-h4Xk/vault)
 drive: server → http://127.0.0.1:43117           (up 2.1s, hydrated)
@@ -152,7 +153,7 @@ drive: server log tail ↓
 drive: kept 2 shots in ./shots; exit 1
 ```
 
-Briefs shrink to: *"Evidence via `nix run ./evidence`; section inline in the PR body beside its shots."* `--hold` is the human's one-command "run olai against my real data."
+Briefs shrink to: *"Evidence via `nix run ./evidence`; section inline in the PR body beside its shots."* The sectionless form is the human's one-command "run olai against my real data."
 
 ---
 
