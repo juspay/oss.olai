@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  body { margin:0; background:#dfeeea; font-family: "Iosevka", "JetBrains Mono", monospace; }
+  .label { color:#0b3b34; font: 600 13px sans-serif; padding:18px 24px 6px; letter-spacing:.04em; }
+  .bar { display:flex; align-items:center; gap:10px; background:#0e3f38; padding:12px 18px; }
+  .brand { color:#e8f4f0; font: italic 700 20px Georgia, serif; margin-right:14px; }
+  .pill { display:flex; align-items:center; gap:8px; background:#134a42; border:1px solid #2a6058; border-radius:999px; padding:7px 14px; color:#cfe8e2; font-size:14px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#39b489; }
+  .search { flex:0 0 220px; color:#7ea89f; background:#134a42; border-radius:999px; padding:7px 14px; font-size:14px; }
+  .muted { color:#7ea89f; }
+  /* loud variants */
+  .loud-amber { border-color:#e0a83c; box-shadow:0 0 0 1px #e0a83c66; }
+  .loud-amber .dot { background:transparent; border:2px solid #e0a83c; width:6px; height:6px; }
+  .loud-amber .warn { color:#f0c46a; }
+  .loud-violet { border-color:#a48ae0; box-shadow:0 0 0 1px #a48ae066; }
+  .loud-violet .dot { background:transparent; border:2px solid #a48ae0; width:6px; height:6px; }
+  .loud-violet .warn { color:#c3aef2; }
+  .tip { position:relative; }
+  .tipbox { position:absolute; top:44px; left:0; background:#f3faf8; color:#28564e; border-radius:10px; padding:10px 14px; font-size:13px; box-shadow:0 6px 24px #0004; white-space:nowrap; }
+  .tipbox b { color:#0b3b34; }
+  .drawer { width:430px; background:#f3faf8; border-radius:14px; margin:10px 18px 24px; padding:14px 18px; box-shadow:0 8px 30px #0003; }
+  .dh { color:#5f8a81; font-size:12px; letter-spacing:.12em; margin-bottom:10px; }
+  .row { display:flex; justify-content:space-between; align-items:baseline; padding:5px 0; font-size:14px; color:#28564e; }
+  .row .who { color:#7c5cd6; font-weight:600; }
+  .row .who2 { color:#8a6ad9; font-weight:600; }
+  .row .sub { color:#5f8a81; font-size:12.5px; }
+  .when { color:#5f8a81; font-size:12.5px; }
+</style></head><body>
+
+<div class="label">A — FRESH PULSE: the pill is QUIET (identical to today); recency lives in the hover</div>
+<div class="bar">
+  <span class="brand">olai</span>
+  <span class="search">search</span>
+  <span class="pill"><span class="dot"></span> live</span>
+  <span class="pill tip"><span class="dot"></span> kolu
+    <span class="tipbox">mirror <b>connected</b> · watcher pulse <b>2m ago</b></span>
+  </span>
+  <span class="pill muted">√ committed · 2h ago</span>
+  <span class="pill">>_ agent</span>
+</div>
+
+<div class="label">B1 — PULSE OVERDUE, amber: the pill itself says what is wrong</div>
+<div class="bar">
+  <span class="brand">olai</span>
+  <span class="search">search</span>
+  <span class="pill"><span class="dot"></span> live</span>
+  <span class="pill loud-amber"><span class="dot"></span> kolu <span class="warn">· watcher quiet 47m</span></span>
+  <span class="pill muted">√ committed · 2h ago</span>
+  <span class="pill">>_ agent</span>
+</div>
+
+<div class="label">B2 — PULSE OVERDUE, violet (the awaiting emphasis olai already reserves for "blocked on you")</div>
+<div class="bar">
+  <span class="brand">olai</span>
+  <span class="search">search</span>
+  <span class="pill"><span class="dot"></span> live</span>
+  <span class="pill loud-violet"><span class="dot"></span> kolu <span class="warn">· watcher quiet 47m</span></span>
+  <span class="pill muted">√ committed · 2h ago</span>
+  <span class="pill">>_ agent</span>
+</div>
+
+<div class="label">C — THE DRAWER, heartbeats gone: attention events only (liveness moved to the pill above)</div>
+<div class="drawer">
+  <div class="dh">RECENTLY WANTED ATTENTION</div>
+  <div class="row"><span><span class="who">π kolu-alert-49 author (pi)</span><br><span class="sub">still waiting for input for 40s</span></span><span class="when">just now</span></div>
+  <div class="row"><span><span class="who2">master</span><br><span class="sub">still waiting for input for 40s</span></span><span class="when">just now</span></div>
+  <div class="row"><span><span class="who">π kolu-alert-49 author (pi)</span><br><span class="sub">has been waiting for input for 10s</span></span><span class="when">just now</span></div>
+  <div class="row"><span><span class="who2">master</span><br><span class="sub">has been waiting for input for 10s</span></span><span class="when">just now</span></div>
+</div>
+
+</body></html>
