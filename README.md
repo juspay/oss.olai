@@ -14,7 +14,9 @@ One vault per orchestrator, one folder per project.
   - `dag.olai` — the pipeline template a dispatched task walks: implement → review → address findings → CI → evidence → merge → retire.
   - `reminders.olai` — dated reminders that survive restarts.
   - `lanes.olai` — the live day board (deliberately untracked; the day's state is working material, the durable story lives in the roadmap).
-- **`olai/`** — the [olai](https://github.com/juspay/olai) project's folder: `roadmap/` (features, bugs, infra — every work item becomes a PR-shaped node here), `brainstorming/`, `RCA/` (post-mortems), `lowy-electricity/` (architecture-debate conclusions).
+- **`projects/`** — one folder per project this orchestrator runs:
+  - `projects/olai/` — the [olai](https://github.com/juspay/olai) project: `roadmap/` (features, bugs, infra — every work item becomes a PR-shaped node here), `brainstorming/`, `RCA/` (post-mortems), `lowy-electricity/` (architecture-debate conclusions).
+  - `projects/saatchi/` — the [saatchi](https://github.com/juspay/saatchi) project: its roadmap.
 - **`_olai/`** — vault internals: property type declarations, trash.
 - **`.claude/skills/`** — skills the orchestrator can invoke (e.g. the lowy-electricity architecture debate).
 - **`briefs/`, `debates/`** — untracked working material: per-task briefs handed to agents, debate turn files.
