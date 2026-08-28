@@ -1,110 +1,121 @@
-# The evidence driver — `nix run .#drive`
+# The evidence driver — `nix run ./evidence`
 
-*Brainstorming, 2026-08-28. Ruled: invocation is `nix run`; lane evidence is a TypeScript section (playwright, full power); sections are throwaway — the PR body carries the section inline in a `<details>` block beside its shots. Not yet dispatched.*
+*Brainstorming, 2026-08-28. Ruled: `nix run`; TypeScript sections; sections throwaway (inlined in the PR body beside their shots); **everything lives in `evidence/` with as little as possible leaking to the repo root — the folder is a future standalone repo** (the vault extraction already proved the wholesale-with-history move).*
 
-**Premise.** `packages/tests` already owns most of the machinery (`evidence.sh`, `evidence.ts`, `support/serve.sh`, `paneVideo.ts`). What lanes rebuilt by hand this week is what it doesn't speak: a real Claude store under a scratch `HOME` (#417), a worktree-local section (#416, #417), video of a state change (strip-resumed-agent). This PR is those three capabilities behind one `nix run` app.
+**Premise.** `packages/tests` has evidence machinery (`evidence.sh`, `serve.sh`, `paneVideo.ts`) but lanes rebuilt plumbing anyway: a real Claude store under a scratch `HOME` (#417), worktree-local sections (#416, #417), video (strip-resumed-agent). This PR builds the self-contained answer — and deliberately does NOT refactor `packages/tests` onto it (that coupling would chain the folder to this repo; it can migrate the day the folder is upstreamed and comes back as an input).
 
 ## Invocation
 
 ```bash
-# From anywhere in a worktree. No devshell, no `just build-client` first —
-# the app carries its environment and builds what's missing.
+# Own flake — nothing registered on the root flake. From any worktree:
 
-# Fixture vault + local section
-nix run .#drive -- --section ./my-evidence.ts --shots ./shots
-
-# Real Claude store (scratch HOME, cwd rewritten, real packaged adapter)
-nix run .#drive -- --store ~/.claude --section ./my-evidence.ts --shots ./shots
-
-# Video instead of stills
-nix run .#drive -- --section ./my-evidence.ts --video ./shots/resume.mp4
-
-# No section: stand the app up against real data, poke by hand, Ctrl-C
-nix run .#drive -- --store ~/.claude --hold
+nix run ./evidence -- --section ./my-evidence.ts --shots ./shots
+nix run ./evidence -- --store ~/.claude --section ./my-evidence.ts --shots ./shots
+nix run ./evidence -- --section ./my-evidence.ts --video ./shots/resume.mp4
+nix run ./evidence -- --store ~/.claude --hold          # serve, poke by hand, Ctrl-C
 ```
 
 ```
-nix run .#drive -- [flags]
+nix run ./evidence -- [flags]
 
   --section <file.ts>   worktree-local section module (throwaway)
-  --vault <dir>         .olai directory to serve        [default: evidence/fixtures/small]
+  --vault <dir>         .olai directory to serve      [default: evidence/host/fixtures/small]
   --store <dir>         Claude session store; copied to scratch HOME, transcript
                         cwds rewritten to the served vault (the sameDirectory rule)
-  --shots <dir>         screenshot destination           [default: ./shots]
-  --video <file.mp4>    record instead of stills (paneVideo + CLAUDE.md transcode)
+  --shots <dir>         screenshot destination         [default: ./shots]
+  --video <file.mp4>    record instead of stills
   --hold                serve and wait; no section
-  --port <n>            pin a port                       [default: 0, URL via serve.sh]
+  --port <n>            pin a port                     [default: 0]
 
-exit 0  section done, shots written        exit 2  boot failed (full server log)
-exit 1  section threw (log tail printed)   always: own processes dead, scratch HOME gone
+exit 0  section done          exit 2  boot failed (full server log printed)
+exit 1  section threw (log tail printed, shots-so-far kept)
+always: own processes dead, scratch HOME removed
 ```
 
-## The PR, as a diff tree
+## The PR, as a diff tree — one `M`, everything else inside the folder
 
 ```
- A  evidence/drive.sh              entry: flag parsing, composition, teardown trap
- A  evidence/drive.ts             readiness waits → { page, shot, serverLog } →
-                                   dynamic-import of --section (helpers lifted
-                                   from packages/tests/evidence.ts)
- A  evidence/store.sh             store copy → scratch HOME, cwd rewrite in every
-                                   transcript, adapter env (the #417 plumbing, extracted)
- A  evidence/sections/example.ts  the documented starting point a lane copies
- A  evidence/fixtures/small/      tiny default vault (three outlines, one doc)
- A  evidence/README.md            the section contract, one page
- M  flake.nix                     apps.drive (hunk below)
- M  packages/tests/evidence.sh    boots through evidence/drive.sh; its baked-in
-                                   sections become `--section builtin:<name>`
- M  packages/tests/paneVideo.ts   exported; becomes --video's engine
- M  HACKING.md                    "producing evidence" = this, one paragraph
- M  CLAUDE.md                     upload recipe's first line: nix run .#drive
+ A  evidence/flake.nix            the app (whole file below); inputs: nixpkgs only
+ A  evidence/flake.lock
+ A  evidence/drive.sh             flags, composition, teardown trap
+ A  evidence/lib/drive.ts         readiness → { page, shot, serverLog } → section import
+ A  evidence/lib/store.sh         store copy, cwd rewrite, adapter env (#417's plumbing)
+ A  evidence/lib/video.ts         --video engine (absorbs paneVideo's approach, no import)
+ A  evidence/sections/example.ts  the starting point a lane copies
+ A  evidence/host/serve.sh        ★ the ONE olai-specific file: how THIS app boots
+ A  evidence/host/fixtures/small/ tiny default vault
+ A  evidence/README.md            contract + upstreaming note
+ M  HACKING.md                    one line: "evidence: see evidence/README.md"
 ```
+
+The `★` is the extraction seam: `lib/` and `drive.sh` know nothing about olai — they run "a web app" defined by `host/serve.sh` (boot command, readiness URL, log path). Upstreaming = `git filter-repo` the folder into its own repo, delete `host/`, and each consumer writes its own `host/`. No imports cross the folder boundary in either direction; helpers were absorbed, not imported.
 
 ```
 evidence/
+├── flake.nix
+├── flake.lock
 ├── drive.sh
-├── drive.ts
-├── store.sh
+├── lib/
+│   ├── drive.ts
+│   ├── store.sh
+│   └── video.ts
 ├── sections/
 │   └── example.ts
-├── fixtures/
-│   └── small/
+├── host/                ← the only part that stays behind at upstreaming
+│   ├── serve.sh
+│   └── fixtures/small/
 │       ├── house.olai
 │       ├── roadmap.olai
 │       └── notes.md
 └── README.md
 ```
 
-## flake.nix hunk
-
-One app on the existing root flake — not a subflake (a worktree per lane means one lockfile and one `.#` namespace beat per-folder flakes):
+## evidence/flake.nix — whole
 
 ```nix
-  apps = forAllSystems (pkgs: {
-    drive = {
-      type = "app";
-      program = pkgs.lib.getExe (pkgs.writeShellApplication {
-        name = "drive";
-        runtimeInputs = [
-          pkgs.bun
-          pkgs.playwright-driver.browsers   # the same pin the e2e shell uses
-          pkgs.ffmpeg                       # --video transcode
-        ];
-        text = ''
-          export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
-          exec bash ${./evidence/drive.sh} "$@"
-        '';
+{
+  description = "drive: photograph a web app doing the thing, against real data";
+
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+  outputs = { self, nixpkgs }:
+    let
+      forAllSystems = f: nixpkgs.lib.genAttrs
+        [ "x86_64-linux" "aarch64-darwin" ]
+        (system: f nixpkgs.legacyPackages.${system});
+    in {
+      apps = forAllSystems (pkgs: {
+        default = {
+          type = "app";
+          program = nixpkgs.lib.getExe (pkgs.writeShellApplication {
+            name = "drive";
+            runtimeInputs = [ pkgs.bun pkgs.playwright-driver.browsers pkgs.ffmpeg ];
+            text = ''
+              export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
+              exec bash ${./drive.sh} "$@"
+            '';
+          });
+        };
       });
     };
-  });
+}
+```
+
+`host/serve.sh` is read at runtime by `drive.sh` (not baked into the flake), so a consumer repo can change how its app boots without touching the app derivation:
+
+```bash
+# evidence/host/serve.sh — the olai adapter, whole
+serve_build()  { (cd "$REPO_ROOT" && just build-client); }
+serve_start()  { (cd "$REPO_ROOT" && bun run olai web --port "$1" --dir "$2" ${STORE_HOME:+--acp}) & echo $!; }
+serve_ready()  { curl -sf "http://127.0.0.1:$1/health"; }
+serve_logs()   { echo "$XDG_STATE_HOME/olai/server.log"; }
 ```
 
 ## The section contract
 
-Default-export one async function; `Drive` hands it a `page` already past readiness (server bound, client hydrated, agent list settled — the waits #417 hand-hardened, now the driver's), `shot(name)`, and `serverLog()`. The strip-resumed-agent lane's evidence, whole:
-
 ```ts
 // my-evidence.ts — dismiss × on a quiet subagent, resume it, see it return
-import type { Drive } from "./evidence/drive.ts"
+import type { Drive } from "./evidence/lib/drive.ts"
 
 export default async ({ page, shot }: Drive) => {
   await page.getByRole("button", { name: "agent" }).click()
@@ -123,10 +134,8 @@ export default async ({ page, shot }: Drive) => {
 
 ## UX flow
 
-Author, happy path:
-
 ```
-$ nix run .#drive -- --store ~/.claude --section ./my-evidence.ts --shots ./shots
+$ nix run ./evidence -- --store ~/.claude --section ./my-evidence.ts --shots ./shots
 drive: client → built (cached)
 drive: store  → /tmp/drive-h4Xk/home/.claude    (33 sessions, cwd → /tmp/drive-h4Xk/vault)
 drive: server → http://127.0.0.1:43117           (up 2.1s, hydrated)
@@ -136,18 +145,15 @@ drive: shot   → shots/my-evidence.strip-resumed-returns.png
 drive: clean  (3 shots, 11.4s)
 ```
 
-Author, failure — loud and situated:
-
 ```
 drive: FAIL in section at shot "strip-resumed-returns" — TimeoutError: waitFor …
 drive: server log tail ↓
-  [chat] resume pr-author: session a3f… reopened
   [strip] membership: pr-author dismissed=true    ← the bug, visible
 drive: kept 2 shots in ./shots; exit 1
 ```
 
-Orchestrator: briefs shrink to *"Evidence via `nix run .#drive`; section inline in the PR body beside its shots"* — and any lane's evidence is reproducible by copy-pasting the section from the PR. Human: invocation 4 (`--hold`) is the one-command "run olai against my real data."
+Briefs shrink to: *"Evidence via `nix run ./evidence`; section inline in the PR body beside its shots."* `--hold` is the human's one-command "run olai against my real data."
 
 ---
 
-Tier by the roster rule: **ordinary** → grok authors, claude-opus reviews.
+Tier: **ordinary** → grok authors, claude-opus reviews.
