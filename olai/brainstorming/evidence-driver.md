@@ -1,38 +1,43 @@
 # drive — photograph an app doing the thing
 
-    nix run ./evidence -- <section.ts>
+    nix run ./evidence
 
-Starts the app, opens a headless browser on it, runs the section (a small
-playwright script: click this, type that), writes one screenshot per named
-step into ./shots/, tears everything down.
+Reads ./evidence.ts (your section: a small playwright script — click this,
+type that), starts the app, runs it in a headless browser, writes one
+screenshot per named step into ./shots/, tears everything down.
+No ./evidence.ts → prints the example to copy. No flags, no arguments.
 
-The tool is app-neutral. All app knowledge lives in host/serve.sh, a
-four-function adapter. A web app is a server process; drive starts it and
-stops it, nothing more.
+App knowledge lives in one place: host/serve.sh, a plain script that starts
+your app. The environment is the whole contract.
 
-## Files
+## Conventions
 
-    .drive/home     the app's HOME for the run. Created empty; never wiped.
-    .drive/data     what the app serves. Absent: host/fixtures/default.
-    ./shots/        output. One png per shot() call, section-prefixed.
+    ./evidence.ts    your section. The well-known filename, like Makefile.
+    .drive/home      the app's HOME. Created empty; never wiped; seed by writing into it.
+    .drive/data      what the app serves. Absent: host/fixtures/default.
+    .drive/app.log   the app's stdout+stderr, captured by drive.
+    ./shots/         one png per shot() call.
 
-Seed state by writing into .drive/* before running. drive knows no formats.
-`rm -rf .drive` for a fresh run.
+    ready  = the app's port answers 200
+    fresh  = rm -rf .drive
+    video  = `export const record = true` in the section (mp4 instead of stills)
+
+drive knows no app and no formats. Seeding .drive/* with meaningful state is
+the caller's business.
 
 ## Exit status
 
     0   section completed, shots written
-    1   section threw. App log tail printed; shots so far and .drive/ kept.
-    2   app failed to boot. Full log printed.
+    1   section threw. app.log tail printed; shots so far and .drive/ kept.
+    2   app failed to boot. app.log printed whole.
 
 Always: every process drive started is dead on exit.
 
 ## Section
 
-Default-export one async function. `page` arrives past readiness.
-`export const record = true` films the run (mp4) instead of stills.
+Default-export one async function; `page` arrives past readiness.
 
-    // my-evidence.ts
+    // evidence.ts
     import type { Drive } from "./evidence/lib/drive.ts"
 
     export default async ({ page, shot }: Drive) => {
@@ -49,30 +54,29 @@ Default-export one async function. `page` arrives past readiness.
       await shot("resumed-returns")
     }
 
-Sections are throwaway: not committed; pasted into the PR body (a
+Sections are throwaway: never committed; pasted into the PR body (a
 `<details>` block) beside their shots.
 
 ## Run
 
-    $ nix run ./evidence -- ./my-evidence.ts
-    drive: build  → ok (cached)
-    drive: home   → .drive/home    data → .drive/data (seeded)
-    drive: app    → up 2.1s, hydrated
-    drive: shot   → shots/my-evidence.before-dismiss.png
-    drive: shot   → shots/my-evidence.after-dismiss.png
-    drive: shot   → shots/my-evidence.resumed-returns.png
-    drive: clean  (3 shots, 11.4s)
+    $ nix run ./evidence
+    drive: home  → .drive/home    data → .drive/data (seeded)
+    drive: app   → up 2.1s, ready
+    drive: shot  → shots/before-dismiss.png
+    drive: shot  → shots/after-dismiss.png
+    drive: shot  → shots/resumed-returns.png
+    drive: clean (3 shots, 11.4s)
 
 ## Layout
 
     evidence/
-    ├── flake.nix            app runner; inputs: nixpkgs only
+    ├── flake.nix            the runner; inputs: nixpkgs only
     ├── flake.lock
     ├── drive.sh             composition, teardown trap
     ├── lib/
-    │   ├── drive.ts         readiness → { page, shot, appLog } → section import
+    │   ├── drive.ts         readiness → { page, shot } → section import
     │   └── video.ts         record = true
-    ├── sections/example.ts  copy me
+    ├── example.evidence.ts  what gets printed when ./evidence.ts is missing
     ├── host/                ← the ONLY app-aware part
     │   ├── serve.sh
     │   └── fixtures/default/
@@ -83,12 +87,17 @@ No imports cross the folder boundary.
 
 ## host/serve.sh — the adapter, whole
 
-    host_build()  { (cd "$REPO_ROOT" && just build-client); }
-    host_start()  { (cd "$REPO_ROOT" && HOME="$DRIVE_HOME" bun run olai web --port "$1" --dir "$DRIVE_DATA") & echo $!; }
-    host_ready()  { curl -sf "http://127.0.0.1:$1/health"; }
-    host_logs()   { echo "$DRIVE_HOME/.local/state/olai/server.log"; }
+Starts the app in the foreground. drive supplies the environment and owns
+the process, its output, and its death.
 
-Port another app: copy evidence/, rewrite these four functions.
+    #!/usr/bin/env bash
+    # env: PORT (bind here), HOME (already .drive/home), DATA (serve this)
+    set -euo pipefail
+    cd "$REPO_ROOT"
+    just build-client
+    exec bun run olai web --port "$PORT" --dir "$DATA"
+
+Port another app: copy evidence/, rewrite this script.
 Upstream one day: the folder minus host/ becomes its own repo.
 
 ## flake.nix
