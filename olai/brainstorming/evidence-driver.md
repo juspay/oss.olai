@@ -9,18 +9,26 @@
 ```bash
 # Own flake — nothing registered on the root flake. From any worktree:
 
-nix run ./evidence -- ./my-evidence.ts                     # fixture vault, run section
-nix run ./evidence -- --store ~/.claude ./my-evidence.ts   # real Claude store
-nix run ./evidence -- --store ~/.claude                    # no section = just serve; Ctrl-C
+nix run ./evidence -- ./my-evidence.ts                # fixture vault, run section
+nix run ./evidence -- --home seed/ ./my-evidence.ts   # seed the run's HOME first
+nix run ./evidence --                                 # no section = just serve; Ctrl-C
+
+# A lane that wants real Claude sessions builds its seed with the host helper —
+# the DRIVER never learns what a session store is:
+nix run ./evidence -- --home "$(./evidence/host/claude-seed.sh ~/.claude)" ./my-evidence.ts
 ```
 
 ```
-nix run ./evidence -- [--vault <dir>] [--store <dir>] [section.ts]
+nix run ./evidence -- [--vault <dir>] [--home <seed-dir>] [section.ts]
 
-  section.ts     worktree-local section module (throwaway). Absent: serve and hold.
-  --vault <dir>  .olai directory to serve   [default: evidence/host/fixtures/small]
-  --store <dir>  Claude session store; copied to scratch HOME, transcript cwds
-                 rewritten to the served vault (the sameDirectory rule)
+  section.ts       worktree-local section module (throwaway). Absent: serve and hold.
+  --vault <dir>    .olai directory to serve   [default: evidence/host/fixtures/small]
+  --home <dir>     copied wholesale into the run's scratch HOME. What it contains
+                   is the caller's business; the driver knows no agent's formats.
+
+Every run: HOME = a fresh tmp dir UNDER THE WORKTREE (.drive/<run>/home, printed
+at boot) — isolated from the developer's real HOME, inspectable after a failure,
+removed on clean exit.
 
 Not flags, on purpose:
   shots  → always ./shots (the section names each one)
@@ -29,8 +37,7 @@ Not flags, on purpose:
   hold   → the absence of a section
 
 exit 0  section done          exit 2  boot failed (full server log printed)
-exit 1  section threw (log tail printed, shots-so-far kept)
-always: own processes dead, scratch HOME removed
+exit 1  section threw (log tail printed, shots-so-far and .drive/<run>/ kept)
 ```
 
 ## The PR, as a diff tree — one `M`, everything else inside the folder
@@ -40,7 +47,9 @@ always: own processes dead, scratch HOME removed
  A  evidence/flake.lock
  A  evidence/drive.sh             flags, composition, teardown trap
  A  evidence/lib/drive.ts         readiness → { page, shot, serverLog } → section import
- A  evidence/lib/store.sh         store copy, cwd rewrite, adapter env (#417's plumbing)
+ A  evidence/host/claude-seed.sh  optional seed builder: copy a Claude store, rewrite
+                                   transcript cwds to the served vault (#417's plumbing —
+                                   host-side, because it knows Claude's formats)
  A  evidence/lib/video.ts         filming, when a section says `export const record = true`
  A  evidence/sections/example.ts  the starting point a lane copies
  A  evidence/host/serve.sh        ★ the ONE olai-specific file: how THIS app boots
@@ -58,12 +67,12 @@ evidence/
 ├── drive.sh
 ├── lib/
 │   ├── drive.ts
-│   ├── store.sh
 │   └── video.ts
 ├── sections/
 │   └── example.ts
 ├── host/                ← the only part that stays behind at upstreaming
 │   ├── serve.sh
+│   ├── claude-seed.sh
 │   └── fixtures/small/
 │       ├── house.olai
 │       ├── roadmap.olai
@@ -107,7 +116,7 @@ evidence/
 ```bash
 # evidence/host/serve.sh — the olai adapter, whole
 serve_build()  { (cd "$REPO_ROOT" && just build-client); }
-serve_start()  { (cd "$REPO_ROOT" && bun run olai web --port "$1" --dir "$2" ${STORE_HOME:+--acp}) & echo $!; }
+serve_start()  { (cd "$REPO_ROOT" && HOME="$DRIVE_HOME" bun run olai web --port "$1" --dir "$2") & echo $!; }
 serve_ready()  { curl -sf "http://127.0.0.1:$1/health"; }
 serve_logs()   { echo "$XDG_STATE_HOME/olai/server.log"; }
 ```
@@ -136,9 +145,9 @@ export default async ({ page, shot }: Drive) => {
 ## UX flow
 
 ```
-$ nix run ./evidence -- --store ~/.claude ./my-evidence.ts
+$ nix run ./evidence -- --home "$(./evidence/host/claude-seed.sh ~/.claude)" ./my-evidence.ts
 drive: client → built (cached)
-drive: store  → /tmp/drive-h4Xk/home/.claude    (33 sessions, cwd → /tmp/drive-h4Xk/vault)
+drive: home   → .drive/run-h4Xk/home             (seeded from /tmp/claude-seed-uY2w)
 drive: server → http://127.0.0.1:43117           (up 2.1s, hydrated)
 drive: shot   → shots/my-evidence.strip-before-dismiss.png
 drive: shot   → shots/my-evidence.strip-after-dismiss.png
