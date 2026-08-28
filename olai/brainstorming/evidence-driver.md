@@ -1,70 +1,48 @@
-# The evidence driver — `nix run ./evidence`
+# `evidence/` — photograph an app doing the thing
 
-*Brainstorming, 2026-08-28. Ruled: `nix run`; TypeScript sections; sections throwaway (inlined in the PR body beside their shots); **everything lives in `evidence/` with as little as possible leaking to the repo root — the folder is a future standalone repo** (the vault extraction already proved the wholesale-with-history move).*
+*Brainstorming, 2026-08-28. Ruled: `nix run`; TypeScript sections; sections throwaway (inlined in the PR body beside their shots); everything encapsulated in `evidence/`, app-neutral, one day its own repo.*
 
-**What it is, in one breath:** screenshot the app doing X, in one command. It starts olai in the background (the real app, serving a test folder, `HOME` pointed at a scratch dir so nothing real is touched), opens a headless browser on it, runs your ten-line click-this-type-that script saving a picture at each named step, and shuts everything down. You get a `shots/` folder. Note the server is not something the tool adds — the server IS olai (the browser loads the page from, and reads every outline through, the `olai web` process); the tool merely starts it and stops it, the way you couldn't photograph Gmail without Gmail running.
+**What it is, in one breath:** screenshot an app doing X, in one command. It starts the app in the background (isolated: `HOME` and data are scratch dirs in the worktree), opens a headless browser on it, runs your ten-line click-this-type-that script saving a picture at each named step, and shuts everything down. You get a `shots/` folder. The tool has no server of its own — a web app *is* a server process, so "the app running" means that process running; the tool starts it and stops it.
 
-**Why build it:** lanes proving their PRs rebuilt exactly this scaffolding three separate times on 2026-08-28 (#416, #417, strip-resumed-agent), each copy dying with its worktree. `packages/tests` has adjacent machinery (`evidence.sh`, `serve.sh`, `paneVideo.ts`) but this PR deliberately does NOT refactor it onto the new folder — that coupling would chain the folder to this repo; it can migrate the day the folder is upstreamed and comes back as an input.
+**The tool knows no app.** Everything app-specific — how to build, boot, and detect readiness, what default data to serve — lives in one adapter: `host/`. This repo's `host/` boots olai; another repo copies `evidence/` and writes its own four functions. The doc mentions no app outside that section.
 
-## Invocation
+**Why build it:** lanes proving their PRs rebuilt exactly this scaffolding three separate times on 2026-08-28, each copy dying with its worktree.
+
+## Interface
 
 ```bash
-# Own flake — nothing registered on the root flake. From any worktree:
-
-nix run ./evidence -- ./my-evidence.ts    # run section, produce shots. That's the tool.
-
-# A lane that wants real Claude sessions seeds the run's HOME first —
-# the DRIVER never learns what a session store is:
-./evidence/host/claude-seed.sh ~/.claude .drive/home
-nix run ./evidence -- ./my-evidence.ts
-
-# "Just run the app against my data" is NOT this tool — the product already has it:
-HOME=.drive/home olai web --dir path/to/vault
+nix run ./evidence -- <section.ts>
 ```
 
+No flags. Everything else is a convention directory, seeded by writing into it:
+
 ```
-nix run ./evidence -- [--vault <dir>] <section.ts>
+.drive/home     the app's HOME for the run    (created empty if absent; never wiped)
+.drive/data     what the app serves           (absent → host/fixtures/default)
+./shots/        where the pictures land       (one per shot() call, section-prefixed)
 
-  section.ts       worktree-local section module (throwaway)
-  --vault <dir>    .olai directory to serve   [default: evidence/host/fixtures/small]
+rm -rf .drive   → a fresh run
 
-The run's HOME is always `.drive/home` in the worktree: created if absent, never
-wiped if present — seeding is putting files there before you run. Isolated from
-the developer's real HOME, inspectable after a failure, `rm -rf .drive` for fresh.
-
-The app is client-server, so the driver boots the server — but only through
-host/serve.sh; ports, URLs and log paths are the host adapter's business and
-never surface in this interface.
-
-Not flags, not modes, on purpose:
-  home   → always .drive/home (seed by writing into it)
-  shots  → always ./shots (the section names each one)
-  video  → the section's call: `export const record = true` films the run
-  hold   → cut; standing the app up by hand is the product's own CLI, above
-
-exit 0  section done          exit 2  boot failed (full server log printed)
+exit 0  section done          exit 2  app failed to boot (full log printed)
 exit 1  section threw (log tail printed; shots-so-far and .drive/ kept)
 ```
+
+Want the app to see particular state — sessions, config, corpora? Put the files in `.drive/home` / `.drive/data` before running. How to fabricate that state is the caller's business; the tool never learns any format.
 
 ## The PR, as a diff tree — one `M`, everything else inside the folder
 
 ```
- A  evidence/flake.nix            the app (whole file below); inputs: nixpkgs only
+ A  evidence/flake.nix             the app runner (whole file below); inputs: nixpkgs only
  A  evidence/flake.lock
- A  evidence/drive.sh             flags, composition, teardown trap
- A  evidence/lib/drive.ts         readiness → { page, shot, serverLog } → section import
- A  evidence/host/claude-seed.sh  optional: copy a Claude store INTO .drive/home, rewrite
-                                   transcript cwds to the served vault (#417's plumbing —
-                                   host-side, because it knows Claude's formats)
- A  evidence/lib/video.ts         filming, when a section says `export const record = true`
- A  evidence/sections/example.ts  the starting point a lane copies
- A  evidence/host/serve.sh        ★ the ONE olai-specific file: how THIS app boots
- A  evidence/host/fixtures/small/ tiny default vault
- A  evidence/README.md            contract + upstreaming note
- M  HACKING.md                    one line: "evidence: see evidence/README.md"
+ A  evidence/drive.sh              composition + teardown trap
+ A  evidence/lib/drive.ts          readiness → { page, shot, appLog } → section import
+ A  evidence/lib/video.ts          filming, when a section says `export const record = true`
+ A  evidence/sections/example.ts   the starting point a lane copies
+ A  evidence/host/serve.sh         ★ the app adapter (this repo's: olai)
+ A  evidence/host/fixtures/default/  the data served when .drive/data is absent
+ A  evidence/README.md             contract + upstreaming note
+ M  HACKING.md                     one line: "evidence: see evidence/README.md"
 ```
-
-The `★` is the extraction seam: `lib/` and `drive.sh` know nothing about olai — they run "a web app" defined by `host/serve.sh` (boot command, readiness URL, log path). Upstreaming = `git filter-repo` the folder into its own repo, delete `host/`, and each consumer writes its own `host/`. No imports cross the folder boundary in either direction; helpers were absorbed, not imported.
 
 ```
 evidence/
@@ -76,21 +54,19 @@ evidence/
 │   └── video.ts
 ├── sections/
 │   └── example.ts
-├── host/                ← the only part that stays behind at upstreaming
+├── host/                ← the ONLY app-aware part; stays behind at upstreaming
 │   ├── serve.sh
-│   ├── claude-seed.sh
-│   └── fixtures/small/
-│       ├── house.olai
-│       ├── roadmap.olai
-│       └── notes.md
+│   └── fixtures/default/
 └── README.md
 ```
+
+Upstreaming = `git filter-repo` the folder into its own repo minus `host/`; each consumer writes its own `host/`. No imports cross the folder boundary in either direction.
 
 ## evidence/flake.nix — whole
 
 ```nix
 {
-  description = "drive: photograph a web app doing the thing, against real data";
+  description = "drive: photograph a web app doing the thing";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -117,17 +93,21 @@ evidence/
 }
 ```
 
-`host/serve.sh` is read at runtime by `drive.sh` (not baked into the flake), so a consumer repo can change how its app boots without touching the app derivation:
+## host/serve.sh — the whole adapter contract
+
+Four functions, read at runtime by `drive.sh`. This is the single place the app's name appears:
 
 ```bash
-# evidence/host/serve.sh — the olai adapter, whole
-serve_build()  { (cd "$REPO_ROOT" && just build-client); }
-serve_start()  { (cd "$REPO_ROOT" && HOME="$DRIVE_HOME" bun run olai web --port "$1" --dir "$2") & echo $!; }
-serve_ready()  { curl -sf "http://127.0.0.1:$1/health"; }
-serve_logs()   { echo "$XDG_STATE_HOME/olai/server.log"; }
+# evidence/host/serve.sh — this repo's adapter (olai)
+host_build()  { (cd "$REPO_ROOT" && just build-client); }
+host_start()  { (cd "$REPO_ROOT" && HOME="$DRIVE_HOME" bun run olai web --port "$1" --dir "$DRIVE_DATA") & echo $!; }
+host_ready()  { curl -sf "http://127.0.0.1:$1/health"; }
+host_logs()   { echo "$DRIVE_HOME/.local/state/olai/server.log"; }
 ```
 
 ## The section contract
+
+Default-export one async function. `Drive` hands it a `page` already past readiness, `shot(name)`, and `appLog()`. A real worked example (a section is inherently a script *against the host app* — this one is the strip-resumed-agent lane's):
 
 ```ts
 // my-evidence.ts — dismiss × on a quiet subagent, resume it, see it return
@@ -151,12 +131,10 @@ export default async ({ page, shot }: Drive) => {
 ## UX flow
 
 ```
-$ ./evidence/host/claude-seed.sh ~/.claude .drive/home
-seed: 33 sessions → .drive/home/.claude (cwds → this worktree's vault)
 $ nix run ./evidence -- ./my-evidence.ts
-drive: client → built (cached)
-drive: home   → .drive/home                      (33 sessions found)
-drive: server → http://127.0.0.1:43117           (up 2.1s, hydrated)
+drive: build  → ok (cached)
+drive: home   → .drive/home    data → .drive/data (seeded)
+drive: app    → up in 2.1s, hydrated
 drive: shot   → shots/my-evidence.strip-before-dismiss.png
 drive: shot   → shots/my-evidence.strip-after-dismiss.png
 drive: shot   → shots/my-evidence.strip-resumed-returns.png
@@ -165,7 +143,7 @@ drive: clean  (3 shots, 11.4s)
 
 ```
 drive: FAIL in section at shot "strip-resumed-returns" — TimeoutError: waitFor …
-drive: server log tail ↓
+drive: app log tail ↓
   [strip] membership: pr-author dismissed=true    ← the bug, visible
 drive: kept 2 shots in ./shots; exit 1
 ```
