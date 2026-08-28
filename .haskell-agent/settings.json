@@ -1,1 +1,1 @@
-{"autoApprove":false,"lastAccounts":[],"lastModel":{"connection":"openai","dialect":"codex","model":"gpt-5.6-sol","provider":"openai","transportModel":"gpt-5.6-sol"},"maxConcurrentAgents":null,"version":1}
+{"autoApprove":false,"lastAccounts":[],"lastModel":{"connection":"xai","dialect":"grok-build","model":"grok-4.6","provider":"xai","transportModel":"grok-4.6"},"maxConcurrentAgents":null,"version":1}
