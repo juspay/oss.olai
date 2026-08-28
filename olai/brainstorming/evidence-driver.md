@@ -9,35 +9,39 @@
 ```bash
 # Own flake — nothing registered on the root flake. From any worktree:
 
-nix run ./evidence -- ./my-evidence.ts                # fixture vault, run section
-nix run ./evidence -- --home seed/ ./my-evidence.ts   # seed the run's HOME first
-nix run ./evidence --                                 # no section = just serve; Ctrl-C
+nix run ./evidence -- ./my-evidence.ts    # run section, produce shots. That's the tool.
 
-# A lane that wants real Claude sessions builds its seed with the host helper —
+# A lane that wants real Claude sessions seeds the run's HOME first —
 # the DRIVER never learns what a session store is:
-nix run ./evidence -- --home "$(./evidence/host/claude-seed.sh ~/.claude)" ./my-evidence.ts
+./evidence/host/claude-seed.sh ~/.claude .drive/home
+nix run ./evidence -- ./my-evidence.ts
+
+# "Just run the app against my data" is NOT this tool — the product already has it:
+HOME=.drive/home olai web --dir path/to/vault
 ```
 
 ```
-nix run ./evidence -- [--vault <dir>] [--home <seed-dir>] [section.ts]
+nix run ./evidence -- [--vault <dir>] <section.ts>
 
-  section.ts       worktree-local section module (throwaway). Absent: serve and hold.
+  section.ts       worktree-local section module (throwaway)
   --vault <dir>    .olai directory to serve   [default: evidence/host/fixtures/small]
-  --home <dir>     copied wholesale into the run's scratch HOME. What it contains
-                   is the caller's business; the driver knows no agent's formats.
 
-Every run: HOME = a fresh tmp dir UNDER THE WORKTREE (.drive/<run>/home, printed
-at boot) — isolated from the developer's real HOME, inspectable after a failure,
-removed on clean exit.
+The run's HOME is always `.drive/home` in the worktree: created if absent, never
+wiped if present — seeding is putting files there before you run. Isolated from
+the developer's real HOME, inspectable after a failure, `rm -rf .drive` for fresh.
 
-Not flags, on purpose:
+The app is client-server, so the driver boots the server — but only through
+host/serve.sh; ports, URLs and log paths are the host adapter's business and
+never surface in this interface.
+
+Not flags, not modes, on purpose:
+  home   → always .drive/home (seed by writing into it)
   shots  → always ./shots (the section names each one)
   video  → the section's call: `export const record = true` films the run
-  port   → always ephemeral; the bound URL is printed
-  hold   → the absence of a section
+  hold   → cut; standing the app up by hand is the product's own CLI, above
 
 exit 0  section done          exit 2  boot failed (full server log printed)
-exit 1  section threw (log tail printed, shots-so-far and .drive/<run>/ kept)
+exit 1  section threw (log tail printed; shots-so-far and .drive/ kept)
 ```
 
 ## The PR, as a diff tree — one `M`, everything else inside the folder
@@ -47,7 +51,7 @@ exit 1  section threw (log tail printed, shots-so-far and .drive/<run>/ kept)
  A  evidence/flake.lock
  A  evidence/drive.sh             flags, composition, teardown trap
  A  evidence/lib/drive.ts         readiness → { page, shot, serverLog } → section import
- A  evidence/host/claude-seed.sh  optional seed builder: copy a Claude store, rewrite
+ A  evidence/host/claude-seed.sh  optional: copy a Claude store INTO .drive/home, rewrite
                                    transcript cwds to the served vault (#417's plumbing —
                                    host-side, because it knows Claude's formats)
  A  evidence/lib/video.ts         filming, when a section says `export const record = true`
@@ -145,9 +149,11 @@ export default async ({ page, shot }: Drive) => {
 ## UX flow
 
 ```
-$ nix run ./evidence -- --home "$(./evidence/host/claude-seed.sh ~/.claude)" ./my-evidence.ts
+$ ./evidence/host/claude-seed.sh ~/.claude .drive/home
+seed: 33 sessions → .drive/home/.claude (cwds → this worktree's vault)
+$ nix run ./evidence -- ./my-evidence.ts
 drive: client → built (cached)
-drive: home   → .drive/run-h4Xk/home             (seeded from /tmp/claude-seed-uY2w)
+drive: home   → .drive/home                      (33 sessions found)
 drive: server → http://127.0.0.1:43117           (up 2.1s, hydrated)
 drive: shot   → shots/my-evidence.strip-before-dismiss.png
 drive: shot   → shots/my-evidence.strip-after-dismiss.png
@@ -162,7 +168,7 @@ drive: server log tail ↓
 drive: kept 2 shots in ./shots; exit 1
 ```
 
-Briefs shrink to: *"Evidence via `nix run ./evidence`; section inline in the PR body beside its shots."* The sectionless form is the human's one-command "run olai against my real data."
+Briefs shrink to: *"Evidence via `nix run ./evidence`; section inline in the PR body beside its shots."*
 
 ---
 
