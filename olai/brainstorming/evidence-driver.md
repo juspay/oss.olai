@@ -2,7 +2,9 @@
 
 *Brainstorming, 2026-08-28. Ruled: `nix run`; TypeScript sections; sections throwaway (inlined in the PR body beside their shots); **everything lives in `evidence/` with as little as possible leaking to the repo root — the folder is a future standalone repo** (the vault extraction already proved the wholesale-with-history move).*
 
-**Premise.** `packages/tests` has evidence machinery (`evidence.sh`, `serve.sh`, `paneVideo.ts`) but lanes rebuilt plumbing anyway: a real Claude store under a scratch `HOME` (#417), worktree-local sections (#416, #417), video (strip-resumed-agent). This PR builds the self-contained answer — and deliberately does NOT refactor `packages/tests` onto it (that coupling would chain the folder to this repo; it can migrate the day the folder is upstreamed and comes back as an input).
+**What it is, in one breath:** screenshot the app doing X, in one command. It starts olai in the background (the real app, serving a test folder, `HOME` pointed at a scratch dir so nothing real is touched), opens a headless browser on it, runs your ten-line click-this-type-that script saving a picture at each named step, and shuts everything down. You get a `shots/` folder. Note the server is not something the tool adds — the server IS olai (the browser loads the page from, and reads every outline through, the `olai web` process); the tool merely starts it and stops it, the way you couldn't photograph Gmail without Gmail running.
+
+**Why build it:** lanes proving their PRs rebuilt exactly this scaffolding three separate times on 2026-08-28 (#416, #417, strip-resumed-agent), each copy dying with its worktree. `packages/tests` has adjacent machinery (`evidence.sh`, `serve.sh`, `paneVideo.ts`) but this PR deliberately does NOT refactor it onto the new folder — that coupling would chain the folder to this repo; it can migrate the day the folder is upstreamed and comes back as an input.
 
 ## Invocation
 
