@@ -1609,3 +1609,5 @@
 {"id":"ezvclcto","parent":"038w5mtz","ord":"a0","title":"PR: the Inbox badge counts marks, and capture mints a todo"}
 {"id":"h004spb2","parent":"ezvclcto","ord":"a0","title":"implement + open PR"}
 {"id":"x-icm-tmp","parent":"h004spb2","ord":"a0","title":"x","created":"2026-08-29T14:42:37-04:00"}
+{"id":"wdkn5u9d","parent":"hvfl0nnd","ord":"a1","title":"Orchestrator"}
+{"id":"olai-subscribes","parent":"wdkn5u9d","ord":"a0","title":"PR: olai watches kolu's terminals itself and updates lane marks","todo":true,"desc":"- The olai server subscribes to kolu's terminal/urgency feeds and updates lane step nodes live — no agent babysitting terminals.\n- Retires the detached watcher shells and hand-flipped marks.\n- Needs mcp-bridge's plumbing first.","after":["lane-cloning","mcp-bridge"],"changed":"2026-08-26T10:43:02-04:00","custom":{"blocker-gone":"2026-08-24 roadmap review: \"needs mcp-bridge's plumbing first\" — mcp-bridge is done (2026-08-15), the blocker is gone; what this PR retires today is the kolu watch background Monitor + the supervision-watcher ledger (instructions.md's ONLY-wake-mechanism), per orchestrator.md rev 2's olai-subscribes-to-padi design"}}
