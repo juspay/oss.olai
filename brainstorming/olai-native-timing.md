@@ -9,13 +9,14 @@ Marks are record FIELDS (beside `title`), not `custom` props — and each field 
 Every state, concretely (timestamps shortened):
 
 ```jsonc
-{"todo":true}                                  // todo: untouched, no started
-{"doing":true,"started":"…09:52"}              // set_doing: stamps started
-{"done":"…12:26","started":"…09:52"}           // set_done: took derivable = 2h34m
-{"cancelled":"…12:26","started":"…09:52"}      // cancelled: same shape, took = time sunk
-{"done":"…12:26"}                              // todo→done jump: no started, no took
-{"doing":true,"started":"…09:52"}              // RE-OPENED after done: started KEPT, not re-stamped
-{}                                             // a plain bullet: not a task, nothing applies
+// BEFORE (today)                    // AFTER
+{"todo":true}                        {"todo":true}                              // untouched
+{"doing":true}                       {"doing":true,"started":"…09:52"}          // set_doing stamps started
+{"done":"…12:26"}                    {"done":"…12:26","started":"…09:52"}       // took derivable = 2h34m
+{"cancelled":"…12:26"}               {"cancelled":"…12:26","started":"…09:52"}  // took = time sunk
+{"done":"…12:26"}                    {"done":"…12:26"}                          // todo→done jump: no started, no took
+{"doing":true}                       {"doing":true,"started":"…09:52"}          // re-opened after done: started KEPT
+{}                                   {}                                         // a plain bullet: not a task
 ```
 
 No migration: old files lack `started` the way they lack `date`. The journal is untouched: `started` places the node on no day page (the journal reads settling instants only, as today).
