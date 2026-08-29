@@ -16,7 +16,7 @@ Generalize that into the seam it always wanted to be:
 }}
 ```
 
-One `LiveDoor` skeleton (the DoorRow argument: one `li`+face shell, spoken once); dressings per declared type. A third kind of living thing later (a deploy? a saatchi session?) is a new dressing, zero new mechanism.
+**The concept is LIVE PROPERTIES** (the human's name, 2026-08-29): a property whose face updates on its own. One seam, dressings per declared type — and each face keeps its honest name: the terminal DOOR (opens a view), the run MATRIX, the ticking took CHIP (native-timing's pomodoro is the same idea pointed inward — the running thing is the task itself). A third kind of living thing later (a deploy? a saatchi session?) is a new dressing, zero new mechanism. Nothing named for one dressing.
 
 ## The odu face, concretely
 
@@ -30,7 +30,7 @@ Discovery is board-driven (ruled): the set of live runs = the lanes' `worktree` 
 
 ## The phases (the kolu family's discipline)
 
-1. **PR 1 — the seam + the read-only face** (ruled scope): `LiveDoor` generalized from the Dock/terminal-door mechanism; the odu dressing; the thin odu client package (upstream). Nothing launches, nothing wakes.
+1. **PR 1 — the seam + the read-only face** (ruled scope): live properties generalized from the Dock/terminal-door mechanism; the odu run matrix as the second dressing; the thin odu client package (upstream). Nothing launches, nothing wakes.
 2. **PR 2 — events into the feed**: run settled / first red / errored-infra land in the attention drawer (phase-A feed, existing vocabulary; amber stays infrastructure's register). With the phase-B doorbell, a red WAKES the conversation.
 3. **PR 3 — launch as an action + the flake rules**: "run CI for this lane" becomes a surface procedure (the phase-3 action family). Classification goes deterministic: post-odu#93, `errored` = infra and `failed` = red are the machine's own words, and FLAKE = failed-then-passed-on-rerun is derivable from run records. The gates phase (orch-p4) then reads CI-green from odu directly; gh statuses stay the publish path for branch protection.
 
