@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "odu": {
+      "command": "nix",
+      "args": ["run", "github:juspay/odu", "--", "mcp"]
+    }
+  }
+}
