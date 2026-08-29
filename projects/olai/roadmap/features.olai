@@ -291,3 +291,4 @@
 {"id":"lane-piacp-deferrals","parent":"chat-pi-agent","ord":"a7","title":"deferrals ruled #human","todo":true,"after":["lane-piacp-evidence"],"created":"2026-08-28T17:15:06-04:00"}
 {"id":"lane-piacp-merge","parent":"chat-pi-agent","ord":"a8","title":"merge #human","todo":true,"after":["lane-piacp-deferrals"],"created":"2026-08-28T17:15:06-04:00"}
 {"id":"lane-piacp-retire","parent":"chat-pi-agent","ord":"a9","title":"retire terminals","todo":true,"after":["lane-piacp-merge"],"created":"2026-08-28T17:15:06-04:00"}
+{"id":"lane-piacp-mcp-research","parent":"chat-pi-agent","ord":"aA","title":"research: routes to MCP support for pi sessions","doing":true,"desc":"The human, 2026-08-29: \"the feature is useless without it\" — pi in the chat cannot reach olai's tool servers because pi-acp accepts mcpServers and wires them to nothing. The author researches the routes and reports; no code until the human picks.","created":"2026-08-29T08:09:16-04:00"}
