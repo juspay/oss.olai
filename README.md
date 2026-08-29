@@ -9,7 +9,7 @@ The working memory of an AI agent orchestrator — the "brain" it boots from, as
 ## The orchestration loop
 
 ```mermaid
-flowchart LR
+flowchart TD
     H([human]) <-->|rulings, merge words| O
 
     subgraph olai chat panel
