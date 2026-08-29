@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>took — timing mock</title>
+<style>
+  body { margin:0; background:#dce9e6; font-family: Georgia, 'Source Serif 4', serif; color:#0b3b34; }
+  .page { max-width: 640px; margin: 40px auto; }
+  h1 { font-size: 15px; font-family: ui-monospace, monospace; color:#5a7a74; font-weight: normal; margin-bottom: 24px; }
+  ul { list-style: none; padding-left: 0; }
+  li { display:flex; align-items:baseline; gap:10px; padding:7px 10px; border-radius:6px; }
+  li.doing { background:#d7f0ea; }
+  .bullet { color:#2a6058; font-size:15px; }
+  .box { font-family: ui-monospace, monospace; font-size:14px; color:#2a6058; }
+  .title { font-size:18px; }
+  .done .title { color:#5a7a74; }
+  .cancelled .title { color:#8aa39e; text-decoration: line-through; text-decoration-thickness:1px; }
+  .took { margin-left:auto; font-family: ui-monospace, monospace; font-size:12.5px;
+          color:#5a7a74; background:#cfe0dc; padding:1px 8px; border-radius:10px; white-space:nowrap; }
+  .doing .took { color:#0b3b34; background:#b8e4d9; font-variant-numeric: tabular-nums; }
+  .cancelled .took { opacity:.6; }
+  .count { margin-left:auto; font-family: ui-monospace, monospace; font-size:12.5px; color:#8aa39e; }
+  .note { margin-top:28px; font-size:13px; color:#5a7a74; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>house.olai — `took` on the tree (mock)</h1>
+  <ul>
+    <li class="doing"><span class="box">◪</span><span class="title">bake the bread</span><span class="took">⏱ <span id="tick">47:12</span></span></li>
+    <li class="done"><span class="box">☑</span><span class="title">fix the hinge on the door</span><span class="took">⏱ 2h 34m</span></li>
+    <li><span class="box">☐</span><span class="title">water the plants</span></li>
+    <li class="cancelled"><span class="box">☒</span><span class="title">repaint the fence</span><span class="took">⏱ 41m</span></li>
+    <li class="done"><span class="box">☑</span><span class="title">call the plumber</span></li>
+    <li><span class="bullet">•</span><span class="title">a note that is not a task</span><span class="count">¶</span></li>
+  </ul>
+  <div class="note">
+    doing ticks live from <code>started</code> (pomodoro); done/cancelled wear the settled span;
+    "call the plumber" jumped todo→done — no <code>started</code>, no chip; bullets carry nothing.
+  </div>
+</div>
+<script>
+  let s = 47*60+12;
+  const el = document.getElementById("tick");
+  setInterval(() => { s++; el.textContent =
+    `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; }, 1000);
+</script>
+</body>
+</html>
