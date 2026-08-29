@@ -20,6 +20,13 @@ flowchart TD
     R --> PR
     PR -- reviews folded · CI green from GitHub --> M{"merge<br/>on the human's word"}
     M -- board swept · terminals retired --> O
+
+    classDef olai fill:#d7f0ea,stroke:#2a6058,color:#0b3b34
+    classDef kolu fill:#fdf0d5,stroke:#c9a227,color:#5c4a00
+    classDef tool fill:#ece6fa,stroke:#8a6ad9,color:#3d2b73
+    class O,V olai
+    class A,R kolu
+    class S tool
 ```
 
 Every lane walks the same pipeline: **implement → refactor → review → fold → CI → evidence → merge → retire**. Reviews read code (never run suites); CI verdicts come from GitHub, never from an agent's claim; evidence is photographed against real data; deferrals park in the Inbox with a link to the PR that owes them, and merge only on the human's word.
