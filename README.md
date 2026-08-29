@@ -29,10 +29,7 @@ Every lane walks the same pipeline: **implement → refactor → review → fold
 | Path | What it is |
 |---|---|
 | `orchestrator/` | The rules the orchestrator re-reads every boot: discipline, agent roster, pipeline template, reminders |
-| `projects/olai/` | [juspay/olai](https://github.com/juspay/olai) — roadmaps, brainstorms, RCAs, debate conclusions, UI prototypes |
-| `projects/saatchi/` | [juspay/saatchi](https://github.com/juspay/saatchi) — the evidence tool's roadmap |
-| `projects/kolu/` | [juspay/kolu](https://github.com/juspay/kolu) — the terminal fleet's roadmap |
-| `projects/nixos-unified-template/` | [juspay/nixos-unified-template](https://github.com/juspay/nixos-unified-template) — the template's roadmap |
+| `projects/` | One folder per project — roadmaps, brainstorms, RCAs, prototypes:<ul><li>[juspay/olai](https://github.com/juspay/olai) — the outliner</li><li>[juspay/saatchi](https://github.com/juspay/saatchi) — the evidence tool</li><li>[juspay/kolu](https://github.com/juspay/kolu) — the terminal fleet</li><li>[juspay/nixos-unified-template](https://github.com/juspay/nixos-unified-template) — the template</li></ul> |
 | `brainstorming/` | Cross-project idea documents (e.g. the design that became saatchi) |
 | `_olai/` | Vault internals: property types, the Inbox (deferrals park here, each linking its source PR), trash |
 | `briefs/`, `debates/` | Untracked working material |
