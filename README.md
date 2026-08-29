@@ -10,27 +10,16 @@ The working memory of an AI agent orchestrator — the "brain" it boots from, as
 
 ```mermaid
 flowchart TD
-    H([human]) <-->|rulings, merge words| O
-
-    subgraph olai chat panel
-        O[orchestrator]
-    end
-
-    O -->|writes decisions| B[(this vault<br/>roadmaps · rules · deferrals)]
-    B -->|is the instructions| O
-
-    O -->|dispatches briefs| A
-    subgraph kolu terminals
-        A[author agent<br/>claude · grok · pi]
-        R[reviewer agents]
-    end
-
-    A -->|opens| PR[pull request]
-    R -->|one comment:<br/>MUST / SHOULD / NIT| PR
-    A -->|evidence via| S[saatchi<br/>shots & video]
-    S --> PR
-    PR -->|CI green, read from GitHub| O
-    O -->|merge on the human's word| PR
+    H([👤 human]) <-- rulings · merge words --> O["orchestrator<br/>(lives in olai's chat panel)"]
+    O <-- reads the rules · writes the decisions --> V[("this vault<br/>roadmaps · rules · deferrals")]
+    O -- briefs a lane --> A["author agent · kolu terminal<br/>claude / grok / pi"]
+    A -- opens --> PR[pull request]
+    A -- films & photographs via --> S[saatchi]
+    S -- evidence on the PR --> PR
+    O -- dispatches --> R["reviewer agents · splits<br/>one comment: MUST / SHOULD / NIT"]
+    R --> PR
+    PR -- reviews folded · CI green from GitHub --> M{"merge<br/>on the human's word"}
+    M -- board swept · terminals retired --> O
 ```
 
 Every lane walks the same pipeline: **implement → refactor → review → fold → CI → evidence → merge → retire**. Reviews read code (never run suites); CI verdicts come from GitHub, never from an agent's claim; evidence is photographed against real data; deferrals park in the Inbox with a link to the PR that owes them, and merge only on the human's word.
