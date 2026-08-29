@@ -1,0 +1,5 @@
+# This is a plain-text vault (outlines + markdown), not an HTML project.
+# The stray .html files are rendered UI prototypes — keep them out of
+# GitHub's language statistics.
+*.html linguist-detectable=false
+projects/*/prototypes/* linguist-documentation
