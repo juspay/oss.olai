@@ -4,7 +4,7 @@ This repository is the working memory of an AI agent orchestrator — the "brain
 
 [Olai](https://github.com/juspay/olai) is an outliner: it serves a directory of `.olai` outline files (trees of nodes with marks, notes, and properties) and the markdown documents beside them. The orchestrator is a long-running AI agent that dispatches coding agents (Claude, Grok, pi) into [kolu](https://github.com/juspay/kolu) terminals, supervises their pull requests through review, CI, and merge — with evidence produced by [saatchi](https://github.com/juspay/saatchi) — and records everything it decides on this board. A fresh orchestrator session reads this repository and knows everything the previous session knew — nothing lives only in a chat transcript.
 
-One vault per orchestrator, one folder per project.
+One vault per orchestrator, one folder per project. [Demo video](https://x.com/sridca/status/2093354491965735091) — olai working on this very repository.
 
 ## Layout
 
