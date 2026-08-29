@@ -1,0 +1,4 @@
+{"id":"kolu-watch-config","ord":"a0","title":"watch","desc":"The watcher's knobs, read live by the olai server (#421). These mirror the orchestrator's own Monitor (`kolu watch --held-for 60s --nag 10m --heartbeat 30m`) so the phase-A soak compares like for like.","created":"2026-08-29T08:30:55-04:00","custom":{"heartbeat":"30m","held-for":"60s","nag":"10m"}}
+{"id":"kolu-watch-mutes","ord":"a1","title":"mutes","desc":"One child per muted terminal, `terminal` prop carrying the id — mirrors the mute list on Supervision (ids rotate on kaval restart; re-identify by intent/cwd).","created":"2026-08-29T08:31:02-04:00"}
+{"id":"kmute-nixos-grok","parent":"kolu-watch-mutes","ord":"a0","title":"the human's nixos-config grok","created":"2026-08-29T08:31:02-04:00","custom":{"terminal":"5c5824d5"}}
+{"id":"kmute-nixos-pi","parent":"kolu-watch-mutes","ord":"a1","title":"the human's nixos-config pi","created":"2026-08-29T08:31:02-04:00","custom":{"terminal":"aa93146f"}}
