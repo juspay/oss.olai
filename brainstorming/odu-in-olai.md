@@ -28,11 +28,11 @@ Odu's coordinator holds the run as live typed state on `.ci/<sha7>/odu.sock` —
 
 Discovery is board-driven (ruled): the set of live runs = the lanes' `worktree` props probed for `.ci/odu.sock`. No odu registry, no odu changes for phase 1.
 
-## The phases (the kolu family's discipline)
+## The phases — three PRs, in order, each complete on its own (how the kolu integration was built)
 
-1. **PR 1 — the seam + the read-only face** (ruled scope): live properties generalized from the Dock/terminal-door mechanism; the odu run matrix as the second dressing; the thin odu client package (upstream). Nothing launches, nothing wakes.
-2. **PR 2 — events into the feed**: run settled / first red / errored-infra land in the attention drawer (phase-A feed, existing vocabulary; amber stays infrastructure's register). With the phase-B doorbell, a red WAKES the conversation.
-3. **PR 3 — launch as an action + the flake rules**: "run CI for this lane" becomes a surface procedure (the phase-3 action family). Classification goes deterministic: post-odu#93, `errored` = infra and `failed` = red are the machine's own words, and FLAKE = failed-then-passed-on-rerun is derivable from run records. The gates phase (orch-p4) then reads CI-green from odu directly; gh statuses stay the publish path for branch protection.
+1. **PR 1 — see it.** A lane's node shows its CI run live: a small chip while it runs (`e2e 2m10s · 8/10 ok`), click for the full table of steps and durations. You can watch; nothing else changes. (Under the hood: the live-properties seam, the odu run matrix as its second dressing, a thin odu client package upstream in juspay/odu.)
+2. **PR 2 — get told.** A finished or failed run also lands in the notification drawer — the same one that shows terminal events — so nobody has to be looking at the right page. Once chat-wakeup ships (the phase-B doorbell), a failed run wakes the orchestrator's conversation directly.
+3. **PR 3 — hands off.** Starting a CI run becomes a button/command in olai, and "flake vs real failure vs broken machine" becomes automatic rules — odu's own records already distinguish them (`errored` = the machine broke, `failed` = the code is wrong, failed-then-passed-on-rerun = flake). The gates phase (orch-p4) then reads "CI green" from odu directly; GitHub statuses remain only what branch protection reads.
 
 ## What retires (ruled: fully)
 
