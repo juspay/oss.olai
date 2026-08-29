@@ -23,6 +23,6 @@ systemd's `Restart=` policy (1-second recovery, twice); the vault's durability (
 
 1. **Deterministic**: the server catches SIGTERM via `sigaction`+`SA_SIGINFO`, honors it only from the systemd user manager, and logs-and-refuses every other sender with pid/uid/cmdline. A stray pkill then cannot kill production and every attempt is named. (olai PR, awaiting dispatch.)
 2. **Hygiene**: house law — no `pkill`/`killall -f` patterns in lanes, ever; cleanup is explicit-pid / process-group / port-scoped only. (Process-file amendment, awaiting approval.)
-3. **Forensics**: auditd kill-syscall rules in nixos-config, so the next unexplained signal is one `ausearch` away. (The human's repo.)
+3. **Forensics**: auditd kill-syscall rules in nixos-config, so the next unexplained signal is one `ausearch` away. — **DEPLOYED by the human, 2026-08-29, same morning; auditd verified active.**
 
 Interim, effective immediately in lane instructions: kills scoped by explicit pid or port only.

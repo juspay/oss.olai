@@ -47,7 +47,9 @@ Lane agents never use `pkill`/`killall` with `-f` patterns. Cleanup is scoped to
 
 This is already the discipline saatchi (`set -m` + group kill + `pkill -P` parent-scoped fallback) and the e2e reaper encode; the amendment writes it into the briefs' stop-lines so ad-hoc cleanups follow it too. Not deterministic by itself — it is the hygiene layer under solution 1's guarantee.
 
-## Solution 3 — auditd: the machine remembers every kill (nixos-config)
+## Solution 3 — auditd: the machine remembers every kill (nixos-config) — **DEPLOYED 2026-08-29**
+
+*The human landed this in nixos-config and deployed it to naiveintent the same morning; `auditd` verified active. The next unexplained signal is one `ausearch` away.*
 
 The Linux audit subsystem can record **every kill-family syscall** with the sender's pid, uid, command, and the target — root included, SIGKILL included, because the record is written by the kernel at syscall entry, not by the dying process.
 
