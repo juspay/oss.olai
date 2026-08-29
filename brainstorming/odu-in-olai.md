@@ -28,11 +28,12 @@ Odu's coordinator holds the run as live typed state on `.ci/<sha7>/odu.sock` —
 
 Discovery is board-driven (ruled): the set of live runs = the lanes' `worktree` props probed for `.ci/odu.sock`. No odu registry, no odu changes for phase 1.
 
-## The phases — three PRs, in order, each complete on its own (how the kolu integration was built)
+## The phases
 
-1. **PR 1 — see it.** A lane's node shows its CI run live: a small chip while it runs (`e2e 2m10s · 8/10 ok`), click for the full table of steps and durations. You can watch; nothing else changes. (Under the hood: the live-properties seam, the odu run matrix as its second dressing, a thin odu client package upstream in juspay/odu.)
-2. **PR 2 — get told.** A finished or failed run also lands in the notification drawer — the same one that shows terminal events — so nobody has to be looking at the right page. Once chat-wakeup ships (the phase-B doorbell), a failed run wakes the orchestrator's conversation directly.
-3. **PR 3 — hands off.** Starting a CI run becomes a button/command in olai, and "flake vs real failure vs broken machine" becomes automatic rules — odu's own records already distinguish them (`errored` = the machine broke, `failed` = the code is wrong, failed-then-passed-on-rerun = flake). The gates phase (orch-p4) then reads "CI green" from odu directly; GitHub statuses remain only what branch protection reads.
+1. **odu PR: a thin client package.** odu exports its surface description + `dial` as a package (exactly what kolu did for olai in orch-p0). No behavior change.
+2. **olai PR: the live-properties seam + the CI face.** The client generalizes the terminal-door mechanism into live properties; olai's server pins the thin odu client, dials `<worktree>/.ci/odu.sock` per lane, and projects the run as a cell; the web draws chip + matrix. Read-only.
+3. **olai PR: run events join the attention feed.** The server's existing events cell (#421's) gains odu sources: settled, red, errored. Same drawer, same doorbell path.
+4. **olai PR: launch + classification.** A surface procedure starts a run; server-side rules classify from the run record (`errored` = infra, `failed` = red, failed-then-rerun-green = flake); orch-p4's gates read CI-green from this cell. GitHub statuses stay only for branch protection. claude-ci retires here.
 
 ## What retires (ruled: fully)
 
