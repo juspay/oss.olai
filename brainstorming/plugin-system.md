@@ -50,17 +50,50 @@ after    surface spec:  plugins/<name>/<member>                                 
 
 The plugin's own package declares its member types; its own client half (the dressings, the drawer) imports them from itself. Core routes the namespace and knows nothing else. A DISABLED plugin's namespace is simply not mounted — the same absent state a machine without the tool already shows, answered uniformly at the one generic door.
 
+## The mount is already in @kolu/surface — use it, don't rebuild it
+
+*(Grounded in kolu.dev/surface/ref-surface — "Composing siblings" and neighbors. Added after the first implementation attempt hand-flattened plugin keys into core tables: `"plugins:odu:ci": odu.handlers.cells.ci` in runtime.ts, a spelled resource/tool table in faces.ts, `olai.cells["plugins:odu:ci"]` in App.tsx — the exact entanglement the framework's own composition API exists to prevent.)*
+
+What the framework already provides:
+
+- **`composeSurfaceContracts({ <key>: surface })`** — merges standalone surfaces into one group by per-sibling tag **prefixing** (`surface/<key>/<member>/<verb>`), never a bare merge. The answer carries **`siblings[key]`**, each sibling's members at its tagged prefix — so handler binding and client dispatch are keyed BY SIBLING "without re-deriving tag rules". The sibling key IS the plugin namespace.
+- **`implementSurface(surface, deps)`** — a plugin implements ITS OWN surface in its own package; the returned `SurfaceRuntime.handlers` come already keyed by full wire tag. Core splices runtimes; it never spells a member key.
+- **`exposeFaces(surfaces, maps)`** — the sibling-bundle twin of `exposeFace`: each plugin ships its own `ExposeMap` (`"<member>": "resource"`, `"<ns>.<verb>": tool`) and core passes the bundle through. The MCP face classification lives in the plugin, not a core table.
+- **`extendSurface(base, ext)`** — noted for completeness: it composes a parent-local runtime onto a RE-SERVED remote base (mirroring), with loud tag collisions and ordered teardown. Not this PR's tool — the plugins are local siblings, not remote mirrors — but it proves handler-record union by wire tag is a supported composition mode.
+- Collisions **fail loud** at boot across the flat per-name namespace; reserved `system/*` members stay the framework's.
+
+So the shape is:
+
+```ts
+// each plugin package: its own surface + runtime + expose map, self-contained
+export const surface = defineSurface({ cells: { ci: {...} }, ... })       // plugin-odu/src/wire.ts
+export const runtime = implementSurface(surface, deps)                    // handlers pre-keyed
+export const faces: ExposeMap<typeof surface> = { ci: "resource" }
+
+// core, once, generically — the ONLY meeting point:
+const enabled = PLUGINS.filter(inFlag)
+const composed = composeSurfaceContracts(fromEntries(enabled.map(p => [p.name, p.surface])))
+const facesBundle = exposeFaces(composed, fromEntries(enabled.map(p => [p.name, p.faces])))
+// handlers: union of enabled plugins' runtime.handlers — already tagged, spliced not spelled
+```
+
+**What might still warrant an upstream ask — to be confirmed by USING the API, not asserted:**
+
+1. A **browser-client typed sibling handle** (`client.siblings[key]` with the plugin's own types) if the client half doesn't already mirror the server's sibling keying — the composition doc promises "client dispatch keyed by sibling", so possibly nothing is missing.
+2. Boot-time sibling filtering (the `--plugins` flag) is plain data over `composeSurfaceContracts`'s record argument — expected to need nothing upstream.
+3. If either turns out rough in practice, the ask goes to kolu with the paired-drishti rule honored — filed then, on the human's word, never assumed now.
+
 ## The interface
 
 ```ts
 // packages/plugin-kolu/src/index.ts
 export const plugin: OlaiPlugin = {
-  name: "kolu",                                   // namespace, prefs row, docs slug
+  name: "kolu",                                   // sibling key, prefs row, docs slug
   // server
   probe,                                          // find the tool; absence = a state, not an error
-  members,                                        // this plugin's cells/collections/streams/procedures,
-                                                  //   mounted under plugins/kolu/ — typed HERE, not in core
-  runtimeHalf,                                    // subscription machinery, deps injected (KoluDeps, generalized)
+  surface,                                        // defineSurface(...) — typed HERE, not in core
+  runtime,                                        // implementSurface(...) — handlers pre-keyed by wire tag
+  faces,                                          // the plugin's own ExposeMap (resource/tool per member)
   mcpServer,                                      // handed to chat sessions when probe says yes
   ownedFile: { basename: "kolu.olai", read: watchConfigIn },
   failures,                                       // WHOLE sentences per failure case — core displays, never composes
@@ -68,7 +101,7 @@ export const plugin: OlaiPlugin = {
   propKinds: [{ kind: "terminal", admits: isTerminalId }],
   // client
   dressings: [{ kind: "terminal", block: TerminalBlock }],   // licensed by declared KIND, not key name
-  chrome: { header: PadiPill, drawer: EventsFeed },
+  chrome: { header: PadiPill, drawer: EventsFeed },          // chrome owns its own cell access — core hands the client down
   docs,                                           // the docs.md page the index assembles
   // tests
   testDrivers,                                    // fake-padi, @kolu / @padi: tags
@@ -99,7 +132,7 @@ mcpServersOf(tools, enabled(PLUGINS).map(p => p.mcpServer))  // after
 
 // server: the runtime slot
 RuntimeWiring = { ..., kolu: KoluHalf | null }         // before
-RuntimeWiring = { ..., halves: RuntimeHalf[] }         // after
+RuntimeWiring = { ..., halves: enabled plugins' runtimes, spliced }   // after
 
 // web: the one registration
 registerBlock(TERMINAL_KEY, TerminalBlock)             // before
@@ -118,7 +151,7 @@ CLI/nix only, exactly the git-policy shape (#434): a server flag / home-manager 
 olai serve --plugins kolu,odu        (or the nix module option; default: all built-in)
               │
    disabled ──┴──> exactly the machine-without-the-tool:
-                   probe never runs · plugins/<name>/ not mounted · chrome unmounted
+                   probe never runs · the sibling is not composed · chrome unmounted
                    dressings unregistered · its kinds validate as text · Kolu.olai an ordinary outline
 ```
 
@@ -126,10 +159,10 @@ Cheap because absence is already ordinary everywhere (`runtime.ts` runs with `ko
 
 ## The fence, generalized
 
-`scripts/check-kolu-deps.sh` (a kolu-name allowlist) becomes two lints in CI:
+`scripts/check-kolu-deps.sh` (a kolu-name allowlist) becomes two lints in CI — never a per-plugin script copy:
 
 1. only `packages/plugins/` may import `plugin-*`
-2. no general package spells a plugin name or key (the 7 `TERMINAL_KEY` sites are the canary)
+2. no general package spells a plugin name or key (the 7 `TERMINAL_KEY` sites are the canary; a spelled `plugins:<name>:` string in core fails the same lint)
 
 ## What compiled-in still cannot do
 
@@ -139,7 +172,7 @@ One thing only: a third party adding a NEW plugin rebuilds olai. Accepted — th
 
 Sequenced as commits, each green on its own:
 
-1. the interface + the generic mount + registries (kolu still the one tenant; the lint lands)
+1. the interface + sibling composition via `composeSurfaceContracts`/`exposeFaces` + registries (kolu still the one tenant; the lint lands)
 2. property kinds as data through the format (the licence flips from key to kind)
 3. the name sweep — chat/kolu.ts, koluConfig.ts, padi/ chrome, testids into `plugin-kolu`; general packages hit zero plugin names
 4. `plugin-odu` — odu-client + odu-ci dressing + run events into the feed (absorbs odu-in-olai phase 3; phase 4 lives here or dies)
