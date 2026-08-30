@@ -1,6 +1,6 @@
 # A plugin system for olai
 
-*2026-08-30, with the human. Rulings: kolu and odu become plugins — everything integration-shaped (events, live properties, MCP, file conventions, docs). Compiled-in is fine; the point is separation of concerns. Core must stay polymorphic — no plugin names in general code. Plugins appear in prefs with an enable/disable toggle.*
+*2026-08-30, with the human. Rulings: kolu and odu become plugins — everything integration-shaped (events, live properties, MCP, file conventions, docs). Compiled-in is fine; the point is separation of concerns. Core must stay polymorphic — no plugin names in general code. Enabled plugins are a CLI/nix-only setting (like git policy, #434); prefs shows them read-only.*
 
 ## Today
 
@@ -82,8 +82,10 @@ ownedFileIn(p.ownedFile, paths)  per enabled plugin    // after
 
 ## Enable/disable
 
+CLI/nix only, exactly the git-policy shape (#434): a server flag / home-manager option, no settings file, no browser toggle. Prefs draws the plugin rows read-only — enabled or disabled, with where to change it.
+
 ```
-prefs ──> enabled set (server-side: probes & MCP are server acts)
+olai serve --plugins kolu,odu        (or the nix module option; default: all built-in)
               │
    disabled ──┴──> exactly the no-kolu machine:
                    probe never runs · wire members answer absent · chrome unmounted
@@ -110,11 +112,10 @@ Cheap because `runtime.ts` already runs with `kolu: null` and every surface alre
 1. **Interface + registries** — `OlaiPlugin`, the four mechanical seams (dressings, wire spread, runtime half, MCP list) go registry-driven; kolu still the one tenant; the lint lands.
 2. **Name sweep** — chat/kolu.ts, koluConfig.ts, padi/ chrome, testids move into `plugin-kolu`; general packages hit zero plugin names. The big one.
 3. **plugin-odu** — odu-client + odu-ci dressing + run events into the feed (absorbs odu-in-olai phase 3; phase 4 lives here or dies).
-4. **Prefs** — the toggle row + disabled-equals-absent tests.
+4. **Prefs** — the read-only plugin rows + the CLI/nix flag + disabled-equals-absent tests.
 
 ## Open questions
 
-1. Enable/disable: server-side (a machine fact) or per-browser? Probes/MCP argue server-side — but where does the setting live, post-#434 (settings went CLI-only)?
-2. Does the chat agent roster (claude/opencode/pi — a second de-facto registry) eventually ride this interface?
-3. `@kolu/surface*` (the app framework) stays out of scope — it is the house, not an appliance. Confirm.
-4. Does `docs/kolu.md` move into the plugin's directory?
+1. Does the chat agent roster (claude/opencode/pi — a second de-facto registry) eventually ride this interface?
+2. `@kolu/surface*` (the app framework) stays out of scope — it is the house, not an appliance. Confirm.
+3. Does `docs/kolu.md` move into the plugin's directory?
