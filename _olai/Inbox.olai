@@ -10,7 +10,7 @@
 {"id":"lane-cif-review-b","parent":"chat-interrupt-flake","ord":"a2","title":"review: claude-opus","todo":true,"after":["lane-cif-implement"],"created":"2026-08-30T14:09:30-04:00","custom":{"reviewer":"agent-claude-opus"}}
 {"id":"lane-cif-merge-master","parent":"chat-interrupt-flake","ord":"a3","title":"merge latest master into the PR","todo":true,"after":["lane-cif-review-a","lane-cif-review-b"],"created":"2026-08-30T14:09:30-04:00"}
 {"id":"lane-cif-address","parent":"chat-interrupt-flake","ord":"a4","title":"address findings","todo":true,"after":["lane-cif-review-a","lane-cif-review-b"],"created":"2026-08-30T14:09:30-04:00"}
-{"id":"lane-cif-ci","parent":"chat-interrupt-flake","ord":"a5","title":"CI green at head","todo":true,"after":["lane-cif-merge-master","lane-cif-address"],"created":"2026-08-30T14:09:30-04:00"}
+{"id":"lane-cif-ci","parent":"chat-interrupt-flake","ord":"a5","title":"CI green at head","todo":true,"after":["lane-cif-merge-master","lane-cif-address"],"created":"2026-08-30T14:09:30-04:00","changed":"2026-08-30T14:34:41-04:00","custom":{"terminal":"66a68b97","worktree":".worktrees/chat-interrupt-flake"}}
 {"id":"lane-cif-evidence","parent":"chat-interrupt-flake","ord":"a6","title":"evidence verified (the trace naming the cause; the loop-pin)","todo":true,"after":["lane-cif-ci"],"created":"2026-08-30T14:09:30-04:00"}
 {"id":"lane-cif-deferrals","parent":"chat-interrupt-flake","ord":"a7","title":"deferrals ruled #human","todo":true,"after":["lane-cif-evidence"],"created":"2026-08-30T14:09:30-04:00"}
 {"id":"lane-cif-merge","parent":"chat-interrupt-flake","ord":"a8","title":"merge","todo":true,"after":["lane-cif-deferrals"],"created":"2026-08-30T14:09:30-04:00"}
