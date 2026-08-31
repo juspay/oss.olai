@@ -190,7 +190,6 @@
           <ul>
             <li><span class="d-wake">WAKE</span> — <code>93c693da</code> (grok reviewer) waiting 2m; its review step is doing → verdict likely posted.</li>
             <li><span class="d-digest">digest</span> — <code>303dc985</code> (author) waiting 14m; lane open, no step doing → lawfully parked.</li>
-            <li><span class="d-drift">drift</span> — <code>b988016d</code> working in <code>.worktrees/x</code>; no un-done node claims it.</li>
           </ul>
           <div class="why">combined while waiting — delivered when the turn ends, AFTER the human's queued message</div>
         </div>
@@ -263,9 +262,7 @@
         <td><span class="d-wake">WAKE</span> — a report or a block; starts a turn or queues into one</td></tr>
     <tr><td>claimed in scope, but no step of its lane is <span class="k">doing</span></td>
         <td><span class="d-digest">digest</span> — a line in the next combined message; lawfully parked</td></tr>
-    <tr><td>unclaimed but <i>working</i> inside olai's worktrees</td>
-        <td><span class="d-drift">drift</span> — one warning; the board missed a dispatch</td></tr>
-    <tr><td>unclaimed, anywhere else</td>
+    <tr><td>unclaimed, anywhere</td>
         <td>silence — the human's, by default, no entry anywhere</td></tr>
   </table>
 </div>
