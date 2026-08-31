@@ -132,7 +132,7 @@
       <div class="p-servers">olai <span class="ok">✓</span>&nbsp; kolu <span class="ok">✓</span> &nbsp;· plus the agent's own</div>
       <div class="p-strip">
         <span><span class="dot">●</span> (no background tasks — the Monitor is retired)</span>
-        <span class="scope">wake on: <b>lanes.olai</b> ▾</span>
+        <span class="scope">kolu: wake on terminal activity · terminals from <b>lanes.olai</b> ▾</span>
       </div>
       <div class="p-scroll">
         <div class="m-agent">…the review is dispatched; I'll pick the verdict up when it lands.</div>
@@ -178,7 +178,7 @@
       <div class="p-servers">olai <span class="ok">✓</span>&nbsp; kolu <span class="ok">✓</span> &nbsp;· plus the agent's own</div>
       <div class="p-strip">
         <span><span class="dot">●</span> 3 fleet events waiting</span>
-        <span class="scope">wake on: <b>lanes.olai</b> ▾</span>
+        <span class="scope">kolu: wake on terminal activity · terminals from <b>lanes.olai</b> ▾</span>
       </div>
       <div class="p-scroll">
         <div class="m-tool"><span class="ok">✓</span> mcp__olai__apply <span style="margin-left:auto">▸</span></div>
@@ -223,7 +223,7 @@
       <div class="p-servers">olai <span class="ok">✓</span>&nbsp; kolu <span class="ok">✓</span> &nbsp;· plus the agent's own</div>
       <div class="p-strip">
         <span><span class="dot">●</span> 6 saved events delivered</span>
-        <span class="scope">wake on: <b>lanes.olai</b> ▾</span>
+        <span class="scope">kolu: wake on terminal activity · terminals from <b>lanes.olai</b> ▾</span>
       </div>
       <div class="p-scroll">
         <div class="m-machine">
@@ -248,11 +248,12 @@
     scope and arrive whole as the next session's first message.</div>
   </div>
 
-  <h1 style="margin-top:2rem">The wake scope is a FILE, not a toggle</h1>
-  <div class="note">The strip's selector names a served <span class="k">.olai</span> file; the doorbell derives its set
-  from the kind-<span class="k">kolu-terminal</span> values on that file's un-done nodes, <b>mirrors resolving to their
-  targets</b> — which makes the day board (<span class="k">lanes.olai</span>) the natural pick: it already holds
-  exactly the live lanes. No file selected = no doorbell. A second conversation may select a different file and
+  <h1 style="margin-top:2rem">What the control means — the subject, then the filter</h1>
+  <div class="note">The wake is on <b>kolu terminal activity</b> — that is the subject, and it is the kolu plugin's own
+  control, speaking its own words. The <span class="k">.olai</span> file is the FILTER: which terminals, namely the
+  kind-<span class="k">kolu-terminal</span> values on that file's un-done nodes, <b>mirrors resolving to their
+  targets</b> — which makes the day board (<span class="k">lanes.olai</span>) the natural filter: it already holds
+  exactly the live lanes. No file selected = no doorbell. A second conversation may filter by a different file and
   become its own seat.</div>
 
   <h1 style="margin-top:1.4rem">The four meanings, derived — never configured</h1>
