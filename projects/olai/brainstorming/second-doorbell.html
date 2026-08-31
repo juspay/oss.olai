@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The second doorbell — prototype (faithful to the chat panel)</title>
+<style>
+  :root {
+    --bg: #f6f3ec; --ink: #2b2926; --dim: #7a746a;
+    /* the panel's own colours, taken from the live app */
+    --panel: #1f2937; --panel-edge: #32404f; --ptext: #d7d5cc; --pdim: #8b95a3;
+    --accent: #e0763a; --bubble: #33404f; --tool: #26333f;
+    --machine: #2a2f45; --machine-edge: #8d7fc7; --wake: #e0763a;
+    --digest: #8b95a3; --drift: #cdae3d; --green: #7fae7a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 Georgia, 'Iowan Old Style', serif; }
+  .frame { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.2rem; font-weight: 600; }
+  .note { color: var(--dim); font-size: .85rem; margin: .4rem 0 1rem; }
+
+  .tabs { display: flex; gap: .4rem; margin: 1.2rem 0 .6rem; flex-wrap: wrap; }
+  .tabs button { font: inherit; font-size: .8rem; padding: .3rem .7rem; border-radius: 999px;
+                 border: 1px solid #d8d2c4; background: transparent; color: var(--dim); cursor: pointer; }
+  .tabs button.sel { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .scene { display: none; } .scene.sel { display: block; }
+
+  /* ── the chat panel, as the app draws it ─────────────────────────── */
+  .panel { background: var(--panel); color: var(--ptext); border-radius: 10px;
+           overflow: hidden; font: 13.5px/1.5 ui-sans-serif, system-ui, sans-serif;
+           border: 1px solid var(--panel-edge); }
+  .p-head { padding: .55rem .8rem .1rem; }
+  .p-title { font-weight: 650; font-size: .95rem; }
+  .p-head .row { display: flex; align-items: center; gap: .5rem; margin-top: .15rem; }
+  .p-agent { color: var(--pdim); font-size: .78rem; }
+  .p-agent .mark { color: var(--accent); }
+  .p-agent .busy { color: var(--accent); }
+  .p-btns { margin-left: auto; display: flex; gap: .35rem; }
+  .p-btns span { border: 1px solid var(--panel-edge); border-radius: 5px;
+                 padding: .1rem .5rem; font-size: .72rem; color: var(--pdim); }
+  .p-servers { padding: .25rem .8rem; color: var(--pdim); font-size: .75rem;
+               border-bottom: 1px solid var(--panel-edge); }
+  .p-servers .ok { color: var(--green); }
+  /* the strip: background tasks + the wake scope — above the scroll, never carried away */
+  .p-strip { padding: .3rem .8rem; font-size: .75rem; color: var(--pdim);
+             border-bottom: 1px solid var(--panel-edge); display: flex; gap: 1rem; align-items: center; }
+  .p-strip .dot { color: var(--accent); }
+  .p-strip .scope { margin-left: auto; border: 1px solid var(--panel-edge); border-radius: 5px;
+                    padding: .05rem .45rem; cursor: pointer; }
+  .p-strip .scope b { color: var(--ptext); font-weight: 600; }
+
+  .p-scroll { padding: .8rem; display: flex; flex-direction: column; gap: .55rem; }
+  .m-agent { max-width: 96%; }
+  .m-human { background: var(--bubble); border-radius: 8px; padding: .45rem .7rem;
+             align-self: flex-end; max-width: 85%; }
+  .m-tool { background: var(--tool); border-radius: 6px; padding: .25rem .6rem;
+            font-size: .78rem; color: var(--pdim); display: flex; gap: .5rem; }
+  .m-tool .ok { color: var(--green); }
+  .m-note { font-size: .74rem; color: var(--pdim); align-self: center; }
+  .m-queued { font-size: .7rem; color: var(--pdim); align-self: flex-end; margin-top: -0.35rem; }
+
+  /* the machine-sent event — a face of its own, never the human's bubble */
+  .m-machine { background: var(--machine); border-left: 3px solid var(--machine-edge);
+               border-radius: 6px; padding: .5rem .7rem; align-self: stretch; font-size: .84rem; }
+  .m-machine .from { font-size: .68rem; letter-spacing: .07em; text-transform: uppercase;
+               color: var(--machine-edge); margin-bottom: .2rem; }
+  .m-machine .from b { color: var(--wake); }
+  .m-machine.digest .from b { color: var(--digest); }
+  .m-machine code { font: .88em ui-monospace, monospace; background: rgba(255,255,255,.07);
+               padding: 0 .25em; border-radius: 3px; }
+  .m-machine .why { color: var(--pdim); font-size: .74rem; margin-top: .2rem; }
+  .m-machine ul { margin: .25rem 0 0 1.1rem; padding: 0; }
+  .m-machine li { margin: .12rem 0; }
+  .d-wake { color: var(--wake); font-weight: 600; }
+  .d-digest { color: var(--digest); font-weight: 600; }
+  .d-drift { color: var(--drift); font-weight: 600; }
+
+  .p-status { padding: .25rem .8rem; font-size: .76rem; color: var(--accent); }
+  .p-compose { margin: .5rem .8rem .7rem; }
+  .p-box { border: 1px solid var(--panel-edge); border-radius: 8px; padding: .5rem .7rem;
+           color: var(--ptext); min-height: 2.2em; }
+  .p-box .caret { display: inline-block; width: 1px; height: 1em; background: var(--ptext);
+           vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .p-box .ph { color: var(--pdim); }
+  .p-under { display: flex; align-items: center; margin-top: .35rem; font-size: .72rem; color: var(--pdim); }
+  .p-under .btns { margin-left: auto; display: flex; gap: .4rem; }
+  .p-under .btn { border: 1px solid var(--panel-edge); border-radius: 5px; padding: .12rem .6rem; }
+  .p-under .send { background: var(--accent); color: #1a1410; border-color: var(--accent); font-weight: 650; }
+
+  .cap { color: var(--dim); font-size: .85rem; margin-top: .5rem; }
+  .cap b { color: var(--ink); }
+
+  /* the injection path diagram */
+  .path { display: flex; align-items: stretch; gap: .5rem; margin: .8rem 0 0; flex-wrap: wrap; }
+  .path .step { border: 1px solid #d8d2c4; border-radius: 8px; padding: .45rem .65rem;
+                font-size: .78rem; background: #efeadf; flex: 1; min-width: 130px; }
+  .path .step b { display: block; font-size: .72rem; letter-spacing: .05em; text-transform: uppercase;
+                color: var(--dim); margin-bottom: .15rem; }
+  .path .arrow { align-self: center; color: var(--dim); }
+  .path .no { border-style: dashed; color: var(--dim); background: transparent; }
+
+  table { border-collapse: collapse; font-size: .85rem; margin-top: .4rem; }
+  td, th { border: 1px solid #d8d2c4; padding: .35rem .6rem; text-align: left; }
+  th { background: #efeadf; font-weight: 600; }
+  .k { font: .85em ui-monospace, monospace; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <h1>The second doorbell — as the chat panel would draw it</h1>
+  <div class="note">Prototype for <span class="k">orch-p2b-wake</span>. Faithful to the panel's real chrome
+  (header, server roster, the strip, tool rows, composer). The new pieces: the <b>wake scope</b> selector on
+  the strip, the <b>machine-sent event</b> face, and the injection path that never touches the composer.</div>
+
+  <div class="tabs">
+    <button class="sel" data-s="idle">idle → wake starts a turn</button>
+    <button data-s="busy">busy + human typing → nothing conflicts</button>
+    <button data-s="gone">no session → first-message summary</button>
+  </div>
+
+  <!-- SCENE 1: idle -->
+  <div class="scene sel" id="s-idle">
+    <div class="panel">
+      <div class="p-head">
+        <div class="p-title">Understand orchestrator role and responsibilities</div>
+        <div class="row">
+          <span class="p-agent"><span class="mark">✳</span> Claude Code Fable · 124k/1M · idle</span>
+          <span class="p-btns"><span>chats</span><span>+ new</span></span>
+        </div>
+      </div>
+      <div class="p-servers">olai <span class="ok">✓</span>&nbsp; kolu <span class="ok">✓</span> &nbsp;· plus the agent's own</div>
+      <div class="p-strip">
+        <span><span class="dot">●</span> (no background tasks — the Monitor is retired)</span>
+        <span class="scope">wake on: <b>lanes.olai</b> ▾</span>
+      </div>
+      <div class="p-scroll">
+        <div class="m-agent">…the review is dispatched; I'll pick the verdict up when it lands.</div>
+        <div class="m-machine">
+          <div class="from">olai · fleet event · <b>wake</b></div>
+          <code>54fe62f9</code> (done-flip-flake author, grok) went <b>waiting</b> after 31m working.
+          Its step “reproduce + fix + open PR” is <b>doing</b> — a report or a block.
+          <div class="why">claimed by an un-done node on lanes.olai (via its mirror) · owning step doing · waiting 1m</div>
+        </div>
+        <div class="p-status">✳ Claude Code is working…</div>
+      </div>
+      <div class="p-compose">
+        <div class="p-box">also file that flake obs<span class="caret"></span></div>
+        <div class="p-under">sends wait their turn
+          <span class="btns"><span class="btn">+</span><span class="btn">/</span><span class="btn">cancel</span><span class="btn send">send</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>The injection never goes near the composer.</b> The human's half-typed draft sits untouched —
+    the event arrives on the wire as a session message with a role of its own, exactly as a queued send does.
+    Idle agent: the event starts the turn; the draft keeps blinking.</div>
+    <div class="path">
+      <div class="step"><b>watcher</b> phase A, in the server — reads the board live</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>derive</b> kind-<span class="k">kolu-terminal</span> on un-done nodes of the scope file (mirrors resolve)</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>deliver</b> a machine-marked message into the session's own queue</div>
+      <div class="arrow">→</div>
+      <div class="step no"><b>never</b> the composer — no keystrokes, no draft edits, no focus theft</div>
+    </div>
+  </div>
+
+  <!-- SCENE 2: busy + typing -->
+  <div class="scene" id="s-busy">
+    <div class="panel">
+      <div class="p-head">
+        <div class="p-title">Understand orchestrator role and responsibilities</div>
+        <div class="row">
+          <span class="p-agent"><span class="mark">✳</span> Claude Code Fable · 131k/1M · <span class="busy">● working…</span></span>
+          <span class="p-btns"><span>chats</span><span>+ new</span></span>
+        </div>
+      </div>
+      <div class="p-servers">olai <span class="ok">✓</span>&nbsp; kolu <span class="ok">✓</span> &nbsp;· plus the agent's own</div>
+      <div class="p-strip">
+        <span><span class="dot">●</span> 3 fleet events waiting</span>
+        <span class="scope">wake on: <b>lanes.olai</b> ▾</span>
+      </div>
+      <div class="p-scroll">
+        <div class="m-tool"><span class="ok">✓</span> mcp__olai__apply <span style="margin-left:auto">▸</span></div>
+        <div class="m-tool"><span class="ok">✓</span> Bash — gh pr checks 448 <span style="margin-left:auto">▸</span></div>
+        <div class="m-human">also check why pi went quiet</div>
+        <div class="m-queued">queued</div>
+        <div class="m-machine digest">
+          <div class="from">olai · fleet digest · 3 events while the turn ran · <b>queued behind your message</b></div>
+          <ul>
+            <li><span class="d-wake">WAKE</span> — <code>93c693da</code> (grok reviewer) waiting 2m; its review step is doing → verdict likely posted.</li>
+            <li><span class="d-digest">digest</span> — <code>303dc985</code> (author) waiting 14m; lane open, no step doing → lawfully parked.</li>
+            <li><span class="d-drift">drift</span> — <code>b988016d</code> working in <code>.worktrees/x</code>; no un-done node claims it.</li>
+          </ul>
+          <div class="why">combined while waiting — delivered when the turn ends, AFTER the human's queued message</div>
+        </div>
+        <div class="p-status">✳ Claude Code is working…</div>
+      </div>
+      <div class="p-compose">
+        <div class="p-box"><span class="ph">…or say the next thing</span></div>
+        <div class="p-under">sends wait their turn
+          <span class="btns"><span class="btn">+</span><span class="btn">/</span><span class="btn">cancel</span><span class="btn send">send</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>No conflict by construction — one queue, one verb.</b> The machine event rides the exact path a
+    mid-turn human send already rides: straight to the agent, waiting its turn. Order is arrival order, and the
+    human's message outranks nothing and is outranked by nothing — the digest above queued after theirs, so it is
+    answered after theirs. Events that pile up while waiting <b>combine into one message</b> rather than arriving
+    as five. The composer is the human's alone the whole time.</div>
+  </div>
+
+  <!-- SCENE 3: no session -->
+  <div class="scene" id="s-gone">
+    <div class="panel">
+      <div class="p-head">
+        <div class="p-title">+ new conversation</div>
+        <div class="row">
+          <span class="p-agent"><span class="mark">✳</span> Claude Code Fable · 0/1M</span>
+          <span class="p-btns"><span>chats</span><span>+ new</span></span>
+        </div>
+      </div>
+      <div class="p-servers">olai <span class="ok">✓</span>&nbsp; kolu <span class="ok">✓</span> &nbsp;· plus the agent's own</div>
+      <div class="p-strip">
+        <span><span class="dot">●</span> 6 saved events delivered</span>
+        <span class="scope">wake on: <b>lanes.olai</b> ▾</span>
+      </div>
+      <div class="p-scroll">
+        <div class="m-machine">
+          <div class="from">olai · while nobody was here · 2h 40m · 6 events</div>
+          <ul>
+            <li><span class="d-wake">WAKE</span> ×2 — <code>54fe62f9</code> reported twice (a PR opened; its address round); still waiting.</li>
+            <li><span class="d-wake">WAKE</span> ×1 — <code>dbf23d9d</code> (CI watcher): the run settled at 10:03.</li>
+            <li><span class="d-digest">digest</span> ×3 — two lawful parks, one heartbeat.</li>
+          </ul>
+          <div class="why">saved while no session was open — this conversation's first message; nothing was lost to the deploy</div>
+        </div>
+        <div class="m-note">the agent boots its own chain, then works the waiting reports oldest-first</div>
+      </div>
+      <div class="p-compose">
+        <div class="p-box"><span class="ph">…or say the next thing</span></div>
+        <div class="p-under">sends wait their turn
+          <span class="btns"><span class="btn">+</span><span class="btn">/</span><span class="btn">cancel</span><span class="btn send">send</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>The gap nothing covers today.</b> Deploys, compactions, closed panels — events are saved per
+    scope and arrive whole as the next session's first message.</div>
+  </div>
+
+  <h1 style="margin-top:2rem">The wake scope is a FILE, not a toggle</h1>
+  <div class="note">The strip's selector names a served <span class="k">.olai</span> file; the doorbell derives its set
+  from the kind-<span class="k">kolu-terminal</span> values on that file's un-done nodes, <b>mirrors resolving to their
+  targets</b> — which makes the day board (<span class="k">lanes.olai</span>) the natural pick: it already holds
+  exactly the live lanes. No file selected = no doorbell. A second conversation may select a different file and
+  become its own seat.</div>
+
+  <h1 style="margin-top:1.4rem">The four meanings, derived — never configured</h1>
+  <table>
+    <tr><th>the terminal is…</th><th>doorbell</th></tr>
+    <tr><td>claimed by an un-done node in scope, its owning step <span class="k">doing</span>, goes waiting</td>
+        <td><span class="d-wake">WAKE</span> — a report or a block; starts a turn or queues into one</td></tr>
+    <tr><td>claimed in scope, but no step of its lane is <span class="k">doing</span></td>
+        <td><span class="d-digest">digest</span> — a line in the next combined message; lawfully parked</td></tr>
+    <tr><td>unclaimed but <i>working</i> inside olai's worktrees</td>
+        <td><span class="d-drift">drift</span> — one warning; the board missed a dispatch</td></tr>
+    <tr><td>unclaimed, anywhere else</td>
+        <td>silence — the human's, by default, no entry anywhere</td></tr>
+  </table>
+</div>
+<script>
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('sel'));
+    document.querySelectorAll('.scene').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    document.getElementById('s-' + b.dataset.s).classList.add('sel');
+  }));
+</script>
+</body>
+</html>
