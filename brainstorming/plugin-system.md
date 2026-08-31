@@ -117,6 +117,75 @@ export const PLUGINS = [kolu, odu]
 
 The interface is deliberately roomy enough that a chat AGENT (claude/opencode/pi — today a second hardcoded roster in `chat/src/agents/`) could one day be a plugin: probe + failure sentences + per-conversation attach is the same shape. Ruled: design for it, migrate later; the roster is untouched in this PR.
 
+## One plugin per agent (the eighth sitting's cut, 2026-08-31)
+
+One plugin PER AGENT, never one roster plugin — the three rows don't share a clock (Claude's adapter pin moved five times in a month; opencode's zero). Each agent's grenade lands in its own vault.
+
+```
+packages/plugin-claude/
+  src/
+    leg.ts        ← chat/src/agents/claude.ts moves here whole (the _meta bets, mcp__ tool
+                    spelling, steering, the queue advertisement — adapter-release frequency)
+    models.ts     ← the two Claude-only bets that today sit in a general package
+                    (picker id "model"; alias tiers sonnet → claude-sonnet-5)
+    adapter.ts    ← the PIN and its patches (acp/patches/ — the 0.66.0 patch debt travels HERE)
+    prompt.ts     ← the system-prompt CHANNEL (_meta.systemPrompt); the TEXT stays core's
+    mark.tsx      ← the SVG (browser half; the generic fallback mark stays in web)
+  docs.md
+packages/plugin-opencode/   ← PATH probe, tool spelling `bash:0`, no-interrupt fact
+packages/plugin-pi/         ← pi-acp pin + the pi-mcp-servers bridge patch + the PATH pair
+```
+
+The server half grows ONE optional hook — beside `probe`, never overloading it. `probe()` answers with a tool to hand **to** a session; an agent **is** the session. Same three fields (`command`/`args`/`env`), different door; the resemblance is a trap.
+
+```ts
+// @olai/plugins/server — the one new hook
+export interface PluginAgent {
+  readonly id: string                              // the picker's key — DATA, not a union arm
+  readonly leg: Leg                                // this agent's wire bets (@olai/chat's socket type)
+  readonly at: (where: Where) => Adapter | null    // find it on THIS host; null = not installed, no fault
+  readonly missing: NotHere | null                 // the install sentence (NoAgent.tsx's rows, one per plugin)
+  readonly prompt: PromptChannel                   // HOW the standing prompt rides (_meta vs first turn)
+}
+
+export interface PluginServerHalf<R> extends PluginWire {
+  // …probe, runtime, kinds — unchanged
+  readonly agent?: PluginAgent                     // ← the hook. Most agent plugins carry ONLY this.
+}
+```
+
+```ts
+// packages/plugin-claude/src/server.ts — the whole manifest, most fields empty (as OlaiPlugin's header promised)
+export const server = {
+  name: "claude",
+  agent: {
+    id: "claude",
+    leg: CLAUDE,
+    at: (where) => adapterFrom(where.env[AGENT_ENV] ?? PINNED),   // the pin lives with its bets
+    missing: null,                                                // shipped-in: absence is never a fault
+    prompt: viaMeta,
+  },
+} satisfies PluginServerHalf<Revision>
+```
+
+Core, before → after:
+
+```ts
+// @olai/surface chat.ts
+export const AGENTS = { claude, opencode, pi }     // before: a closed union — a 4th agent is a core PR
+readonly agents: ReadonlyArray<AgentRow>           // after: data the server sent; the picker draws what arrived
+
+// @olai/chat agents/roster.ts
+const KINDS = [ {id: "claude", leg, at}, … ]       // before: the second hardcoded roster
+rosterOf(agents, where)                            // after: the composition root hands the enabled list in
+```
+
+What stays core: `@olai/acp` whole (the protocol is the LANGUAGE, not an integration — a general package every plugin may import); `Leg` the interface (the socket every bet is safe to lose against); the panel/picker/queueing UX; the system-prompt TEXT (one olai-authored module, versioned with the binary — only the channel is per-agent).
+
+Enable/disable is the existing story, nothing new: `--plugins=opencode,pi` serves a panel with no Claude row, no probe run, no mark — and the no-agent face's install sentences are each enabled plugin's `missing.why`, spent a second time. `OLAI_ACP_AGENT=""` (panel off) keeps its meaning; `--plugins` without any agent plugin says the same thing in the system's own grammar.
+
+Refused at the design, so the lane cannot drift into them: no probe overload (above); no dummy `defineSurface({})` to satisfy the wire type — either the type's required-surface clause argues itself down for this population, or an agent plugin declares a member it genuinely owns (a roster row is a cell candidate — the lane's design round decides); `@olai/acp` never dissolves into the three plugins (the one place "ACP" is spelled correctly stays one place).
+
 ## Property types now
 
 Today a prop named `terminal` gets the terminal door — name-matching. Ruled: solve types in this PR. A plugin contributes property KINDS; the vault declares the kind in `_olai/Properties.olai`; the face follows the KIND, whatever the prop is named.
