@@ -186,6 +186,65 @@ Enable/disable is the existing story, nothing new: `--plugins=opencode,pi` serve
 
 Refused at the design, so the lane cannot drift into them: no probe overload (above); no dummy `defineSurface({})` to satisfy the wire type — either the type's required-surface clause argues itself down for this population, or an agent plugin declares a member it genuinely owns (a roster row is a cell candidate — the lane's design round decides); `@olai/acp` never dissolves into the three plugins (the one place "ACP" is spelled correctly stays one place).
 
+## The second doorbell's door (the wake PR, 2026-08-31)
+
+The doorbell is plugin-kolu's feature whole — the watcher, the derivation, the meanings, the digest, the saved events, the strip's scope control. Core grows exactly ONE generic capability: deliver a machine-marked message into a conversation. Prototype: [second-doorbell.html](../projects/olai/brainstorming/second-doorbell.html).
+
+```ts
+// @olai/plugins/server — PluginServices grows one field, handed in at the composition root
+// (the same move that hands a probe's MCP server to chat: the ROOT wires, no plugin imports chat)
+export interface Deliveries {
+  /** The conversations that opted into THIS plugin's wakes, each with its chosen filter file.
+   *  Core stores the pair beside the conversation note; the plugin never sees a transcript. */
+  readonly scopes: () => ReadonlyArray<{ readonly conversation: ConversationId; readonly file: string }>
+  /** ONE machine-marked message into one conversation. Core owns the mechanics:
+   *  agent idle → starts a turn; busy → queues AT THE AGENT behind whatever the human
+   *  queued first (never the composer, never a keystroke); no session → saved, delivered
+   *  as the next session's first message. The WORDS are the plugin's — whole sentences,
+   *  the missing.why rule spent a third time. */
+  readonly deliver: (to: ConversationId, body: string, opts?: {
+    /** Messages sharing a key, while still undelivered, REPLACE each other — the plugin
+     *  sends a fresh combined digest per event and core holds exactly one. Combining
+     *  stays the plugin's authorship; holding stays core's mechanics. */
+    readonly coalesce?: string
+  }) => Promise<void>
+}
+
+export interface PluginServerHalf<R> {
+  // …probe, runtime, kinds, agent? — unchanged
+  /** The strip control's SENTENCE, when this plugin wakes conversations: core draws
+   *  the row and the file picker (files are core vocabulary), the plugin says what
+   *  the wake IS — subject first, filter second. */
+  readonly wake?: { readonly control: string }   // "wake on terminal activity · terminals from"
+}
+```
+
+```ts
+// packages/plugin-kolu/src/wake.ts — the doorbell, whole, in the plugin
+export const wake = (services: PluginServices<Revision>) =>
+  watcher.on((event) => {
+    for (const { conversation, file } of services.deliveries.scopes()) {
+      const set = claimedTerminals(file)        // kind kolu-terminal on un-done nodes, mirrors resolved
+      const meaning = meaningOf(event, set)     // WAKE · digest · drift · silence, from the board
+      if (meaning === "silence") continue
+      services.deliveries.deliver(conversation, sentenceOf(event, meaning),
+        meaning === "digest" ? { coalesce: "kolu-digest" } : undefined)
+    }
+  })
+```
+
+What each side owns:
+
+| | core (the door) | plugin-kolu (the doorbell) |
+|---|---|---|
+| the strip row + file picker | draws it, stores `(conversation, plugin, file)` | says the control's sentence |
+| delivery mechanics | idle/busy/no-session, queue order, the machine mark | — |
+| the words | never composes one | every sentence, every meaning |
+| the set + the meanings | — | derives from the board via the licence consult |
+| saved events | holds them per scope | summarizes them on delivery |
+
+Refused drifts: no kolu words in core — the door speaks conversations and files only; delivery never touches the composer (the wire path a queued send already rides); `deliver` is write-only — a plugin never reads a conversation; kolu disabled = the strip row absent, the doorbell absent, the honest machine-without-the-tool state. The Monitor retires against this door, and `_olai/Kolu.olai` reduces to the watch knobs.
+
 ## Property types now
 
 Today a prop named `terminal` gets the terminal door — name-matching. Ruled: solve types in this PR. A plugin contributes property KINDS; the vault declares the kind in `_olai/Properties.olai`; the face follows the KIND, whatever the prop is named.
