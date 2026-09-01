@@ -2,7 +2,7 @@
 
 **The idea in one sentence:** every team runs its own Kolu+Olai box (layer 1+2); Xyne Spaces gives the whole org multi-player chat; layer 3 connects them so a team's channel becomes the place where the fleet reports and takes orders.
 
-*Grounded in the xyne-spaces source, 2026-09-01: three research passes plus a fourth exhaustive Apps-framework sweep, load-bearing claims verified first-hand. Details and citations live in the footnotes.*
+*Grounded in the xyne-spaces source, 2026-09-01: three research passes plus a fourth exhaustive Apps-framework sweep, load-bearing claims verified first-hand. Details and citations live in the footnotes. Phase-1 UI prototype: `projects/olai/prototypes/layer3-mirror.html`.*
 
 ## What a team member gets
 
@@ -63,11 +63,13 @@
 2. **Steer** — receive mention/DM events, verify signature, relay attributed into the conversation.
 3. **Polish** — register `/olai …` commands; Flow screens for gates; optionally the org-context connector so lane history is org-searchable.
 
-## Open rulings for the human
+## Ruled (the human, 2026-09-01, question tool)
 
-1. **Authority** — anyone with channel write counts as "the team's word" (attributed per message), or a named allowlist?
-2. **Granularity** — one channel per team-orchestrator, threads per lane?
-3. **What mirrors** — every doorbell event, or digest level (settles, merges, blocks)?
+1. **Watch-only for now** — phase 1 posts; nobody steers from chat until the human rules steering in. The signed mention/DM path stays unwired.
+2. **One channel per team** — one channel = one orchestrator; one thread per lane.
+3. **Digest verbosity** — dispatched, review verdicts, CI result, merged, stuck/needs-human: roughly 5–8 messages per PR, never the firehose.
+
+Phase 1 is boarded as `plugin-spaces-mirror` on the olai roadmap (Orchestrator family); it starts on the human's word.
 
 ---
 
@@ -82,5 +84,7 @@
 [^commands]: Models `AppCommand`/`InstalledAppCommand` (template vs frozen install snapshot, re-synced on Update — `appUtils.ts:23-71`). Invocation `POST /api/apps/channel/:channelId/command` (`commandController.ts:492-705`): POSTs `{actionId, type: command|shortcut|message_shortcut, values:{text}, context:{channelId, conversationId, userId, messageId, flowJSON?}}` with `X-Xyne-Event` header, 30s sync timeout; errors surface to the invoking user as ephemeral notices.
 
 [^flow]: Post a screen via `postMessage` with `flow:{version:'2.0', screenId, title, components[], …}`; a component action hits `POST /api/apps/flow/action` (`flowController.ts:32-215`) which POSTs to the app HMAC-signed and, on an `open_screen`/`next_screen` response, renders the returned screen in place — a synchronous interactive round trip. Buttons outside Flow use `dispatchAction` (fire-and-forget, `chatController.ts:603-678`).
+
+[^slack]: `apps/backend/src/apps/platform-adapters/slack/` — a Slack Web-API-shaped surface (`chat.postMessage`, `conversations.*`, `users.*`, `files.*`, `auth.test`) mounted at `/api/apps/slack`, same scopes as the native routes; inbound-API compatibility only — outbound event payloads stay Xyne's own shape.
 
 [^limits]: No-mention-no-webhook confirmed at `messages-handler.ts:640-699` (empty mention set ⇒ zero app-event branches fire). Fire-and-forget fan-out: `eventSubscriptionUtils.ts:89-108` (`.map(async…)` uncollected, failures logged only). Unsigned command dispatch: no `signWebhookPayload` call in `commandController.ts` (contrast `flowController.ts:111-148`); `prCheckCallback.ts`'s dispatch is likewise unsigned. Also: Spaces ships no per-team self-host (dev/CI compose only) and its claw agent plane runs in Xyne's own Kata sandboxes with no team-hosted-runner concept — which is exactly why the bridge lives on the team box and dials/receives as an installed app instead.

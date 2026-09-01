@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Layer 3 · phase 1 “Mirror” — UI prototype (all UX flows)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#191c1a; --panel:#20241f; --panel2:#252a24; --line:#333a32;
+    --text:#e7eae3; --dim:#9aa294; --accent:#8fd0a0; --accent2:#5aa871;
+    --red:#e07a6a; --amber:#d8b45f; --bot:#2a3230; --human:#2e3341;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font:14px/1.45 var(--sans);height:100vh;display:flex;flex-direction:column}
+  header.note{background:#14271c;border-bottom:1px solid var(--line);padding:8px 16px;font-size:12px;color:var(--dim)}
+  header.note b{color:var(--accent)}
+  .app{flex:1;display:flex;min-height:0}
+  /* ── left: channels ── */
+  nav{width:210px;background:var(--panel);border-right:1px solid var(--line);padding:14px 0;flex-shrink:0}
+  nav h1{font-size:13px;padding:0 14px 10px;color:var(--dim);font-weight:600}
+  nav .ch{padding:5px 14px;color:var(--dim);cursor:default}
+  nav .ch.active{background:var(--panel2);color:var(--text);border-left:3px solid var(--accent);padding-left:11px}
+  nav .ch .unread{background:var(--accent2);color:#0e130f;border-radius:9px;font-size:11px;padding:0 6px;float:right}
+  nav .sec{margin-top:16px}
+  /* ── center: channel ── */
+  main{flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+  .chanhead{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline}
+  .chanhead b{font-size:15px}
+  .chanhead span{color:var(--dim);font-size:12px}
+  .scroll{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:14px}
+  .msg{display:flex;gap:10px;max-width:860px}
+  .avatar{width:32px;height:32px;border-radius:7px;background:var(--accent2);color:#10150f;font-weight:700;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+  .avatar.human{background:#7d90c9}
+  .avatar.bot::after{content:""}
+  .who{font-weight:600;font-size:13px}
+  .who .tag{background:#3b443b;color:var(--dim);font-size:10px;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+  .who .t{color:var(--dim);font-weight:400;font-size:11px;margin-left:8px}
+  .body{margin-top:2px}
+  .card{margin-top:6px;background:var(--bot);border:1px solid var(--line);border-left:3px solid var(--accent2);
+        border-radius:6px;padding:9px 12px;max-width:640px}
+  .card.red{border-left-color:var(--red)}
+  .card.amber{border-left-color:var(--amber)}
+  .card .k{color:var(--dim);font-size:12px}
+  .card .row{display:flex;gap:14px;margin-top:4px;font-size:13px;flex-wrap:wrap}
+  .pill{border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:12px;color:var(--dim)}
+  .pill.g{color:var(--accent);border-color:var(--accent2)}
+  .pill.r{color:var(--red);border-color:var(--red)}
+  .pill.a{color:var(--amber);border-color:var(--amber)}
+  code{font-family:var(--mono);font-size:12px;background:#161a16;border-radius:4px;padding:1px 5px}
+  .thread-link{margin-top:7px;color:var(--accent);font-size:12.5px;cursor:pointer}
+  .thread-link:hover{text-decoration:underline}
+  .flownum{position:absolute;margin-left:-34px;margin-top:2px;background:var(--amber);color:#191c1a;font-weight:700;
+           width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+  /* typing indicator */
+  .typing{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:12.5px;padding-left:42px}
+  .dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--dim);margin-right:3px;
+             animation:blink 1.2s infinite}
+  .dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%{opacity:.25}40%{opacity:1}}
+  .composer{border-top:1px solid var(--line);padding:12px 18px}
+  .composer .box{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--dim)}
+  /* ── right: thread panel ── */
+  aside{width:400px;background:var(--panel);display:flex;flex-direction:column;flex-shrink:0}
+  aside .head{padding:10px 14px;border-bottom:1px solid var(--line)}
+  aside .head b{font-size:13px}
+  aside .head .sub{color:var(--dim);font-size:11.5px;margin-top:2px}
+  aside .scroll{padding:12px 14px;gap:12px}
+  aside .msg{max-width:100%}
+  aside .card{max-width:100%}
+  .divider{color:var(--dim);font-size:11px;text-align:center;border-bottom:1px solid var(--line);line-height:.1;margin:8px 0}
+  .divider span{background:var(--panel);padding:0 8px}
+</style>
+</head>
+<body>
+
+<header class="note">
+  <b>Prototype — Layer 3, phase 1 “Mirror” (watch-only · one channel per team · digest verbosity).</b>
+  Numbered badges ❶–❻ mark the six UX flows: lane dispatched → working indicator → review verdict → first-red alert →
+  needs-your-word → merged. The bot never replies to humans in this phase (see ❼).
+</header>
+
+<div class="app">
+
+  <!-- ══ channels ══ -->
+  <nav>
+    <h1>naiveintent · Spaces</h1>
+    <div class="ch"># general</div>
+    <div class="ch active"># team-olai <span class="unread">3</span></div>
+    <div class="ch"># frontend</div>
+    <div class="sec h1"></div>
+    <div class="ch">✉ olai (bot DM)</div>
+  </nav>
+
+  <!-- ══ channel: the digest stream ══ -->
+  <main>
+    <div class="chanhead"><b># team-olai</b><span>the fleet’s channel · olai bot + 4 people</span></div>
+    <div class="scroll">
+
+      <div class="divider"><span>today</span></div>
+
+      <!-- ❶ lane dispatched -->
+      <div class="msg" style="position:relative"><span class="flownum">1</span>
+        <div class="avatar">ол</div>
+        <div>
+          <div class="who">olai <span class="tag">APP</span><span class="t">12:56</span></div>
+          <div class="body">Lane dispatched: <b>CI joins the conversation</b></div>
+          <div class="card">
+            <div class="k">olai · PR pending · author <b>pi</b> · tier design-heavy · merge: human</div>
+            <div class="row"><span class="pill">brief: odu-doorbell</span><span class="pill">worktree .worktrees/odu-doorbell</span></div>
+          </div>
+          <div class="thread-link">🧵 lane thread · 6 replies — open ➤</div>
+        </div>
+      </div>
+
+      <!-- another lane, collapsed -->
+      <div class="msg">
+        <div class="avatar">ол</div>
+        <div>
+          <div class="who">olai <span class="tag">APP</span><span class="t">16:35</span></div>
+          <div class="body">Lane dispatched: <b>task notifications stop spilling raw</b></div>
+          <div class="card">
+            <div class="k">olai · PR pending · author <b>opencode</b> · tier ordinary · merge: human</div>
+          </div>
+          <div class="thread-link">🧵 lane thread · 2 replies</div>
+        </div>
+      </div>
+
+      <!-- ❺ needs-your-word surfaces at CHANNEL level too -->
+      <div class="msg" style="position:relative"><span class="flownum">5</span>
+        <div class="avatar">ол</div>
+        <div>
+          <div class="who">olai <span class="tag">APP</span><span class="t">15:15</span></div>
+          <div class="body">⏸ <b>Needs a word:</b> odu #97 is green on both platforms — merge is a human’s on this lane.</div>
+          <div class="card amber">
+            <div class="k">odu · PR #97 · all gates passed · waiting since 15:15</div>
+            <div class="row"><span class="pill a">merge-human</span><span class="pill g">CI 18/18</span>
+              <span class="pill">reply in olai, or on the box — chat is watch-only</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ❼ humans talk; bot does NOT respond (watch-only) -->
+      <div class="msg" style="position:relative"><span class="flownum">7</span>
+        <div class="avatar human">S</div>
+        <div>
+          <div class="who">Sridhar<span class="t">15:18</span></div>
+          <div class="body">nice — I’ll merge #97 from olai. (bot ignores chat in phase 1, this is just us talking)</div>
+        </div>
+      </div>
+
+      <!-- ❻ merged -->
+      <div class="msg" style="position:relative"><span class="flownum">6</span>
+        <div class="avatar">ол</div>
+        <div>
+          <div class="who">olai <span class="tag">APP</span><span class="t">15:22</span></div>
+          <div class="body">✅ <b>Merged:</b> odu #97 — “One <code>odu mcp</code>, many checkouts” @ <code>2e7b30f6</code></div>
+          <div class="card">
+            <div class="k">dispatch→merge 2h 4m · implement 65m (opencode) · review 15m (grok) · CI 9m both platforms</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ❷ live working indicator (ephemeral agentProgress) -->
+      <div class="typing" style="position:relative"><span class="flownum" style="margin-left:-16px">2</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+        olai is working — pi on “CI joins the conversation”, turn running 4m…
+      </div>
+
+    </div>
+    <div class="composer"><div class="box">Message # team-olai — humans chat freely; the bot only posts (phase 1)</div></div>
+  </main>
+
+  <!-- ══ thread panel: one lane’s whole digest ══ -->
+  <aside>
+    <div class="head">
+      <b>🧵 Lane: CI joins the conversation</b>
+      <div class="sub"># team-olai · thread = one lane, digest only (5–8 messages/PR)</div>
+    </div>
+    <div class="scroll">
+
+      <div class="msg"><div class="avatar">ол</div><div>
+        <div class="who">olai <span class="tag">APP</span><span class="t">12:56</span></div>
+        <div class="body">Dispatched — author <b>pi</b>, brief <code>odu-doorbell.md</code>. Both halves ship in one PR.</div>
+      </div></div>
+
+      <div class="msg"><div class="avatar">ол</div><div>
+        <div class="who">olai <span class="tag">APP</span><span class="t">13:12</span></div>
+        <div class="body">PR opened: <b>olai #459</b> @ <code>a1b2c3d4</code></div>
+      </div></div>
+
+      <!-- ❸ review verdict -->
+      <div class="msg" style="position:relative"><span class="flownum">3</span>
+        <div class="avatar">ол</div><div>
+        <div class="who">olai <span class="tag">APP</span><span class="t">14:02</span></div>
+        <div class="body">Review (grok): <b>changes requested</b></div>
+        <div class="card red">
+          <div class="row"><span class="pill r">1 MUST</span><span class="pill a">3 SHOULD</span><span class="pill">1 NIT</span></div>
+          <div class="k" style="margin-top:4px">MUST: checkout arg is prose, not a check — a bad path orphans a detached run.</div>
+        </div>
+      </div></div>
+
+      <div class="msg"><div class="avatar">ол</div><div>
+        <div class="who">olai <span class="tag">APP</span><span class="t">14:41</span></div>
+        <div class="body">Addressed @ <code>5164d70f</code> → re-verdict: <b>approve</b>, nothing remaining.</div>
+      </div></div>
+
+      <!-- ❹ first-red, then green (message UPDATED in place via updateMessage) -->
+      <div class="msg" style="position:relative"><span class="flownum">4</span>
+        <div class="avatar">ол</div><div>
+        <div class="who">olai <span class="tag">APP</span><span class="t">15:06 <i>(edited 15:14)</i></span></div>
+        <div class="body">CI @ <code>5164d70f</code>: <s style="color:var(--red)">🔴 first red — e2e@linux</s> → <b style="color:var(--accent)">🟢 green, 18/18 both platforms</b></div>
+        <div class="card">
+          <div class="k">the red was a retry that went green; no flakes filed · one message, updated in place — not two</div>
+        </div>
+      </div></div>
+
+      <div class="msg"><div class="avatar">ол</div><div>
+        <div class="who">olai <span class="tag">APP</span><span class="t">15:15</span></div>
+        <div class="body">⏸ All gates passed — <b>merge is a human’s.</b> Say the word in olai.</div>
+      </div></div>
+
+    </div>
+    <div class="composer"><div class="box">Reply in thread — humans only; the bot won’t answer (phase 1)</div></div>
+  </aside>
+
+</div>
+</body>
+</html>
