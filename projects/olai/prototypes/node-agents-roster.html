@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Node bots — faithful olai mock (bots in sidebar · door on the row · right panel switches)</title>
+<title>Node agents — faithful olai mock (agents in sidebar · door on the row · right panel switches)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -37,7 +37,7 @@
   .side .row:hover{background:var(--side2)}
   .side .row .ic{width:14px;text-align:center;color:var(--sdim);flex-shrink:0}
   .side .row.indent{padding-left:30px}
-  /* the BOTS roster */
+  /* the AGENTS roster */
   .bot{padding:5px 14px;display:flex;gap:8px;align-items:center;cursor:pointer;position:relative}
   .bot:hover{background:var(--side2)}
   .bot.active{background:var(--side2);border-left:3px solid #7fd096;padding-left:11px}
@@ -67,7 +67,7 @@
   .props{display:flex;flex-wrap:wrap;gap:5px;margin:3px 0 5px 24px}
   .prop{background:var(--chip);border:1px solid var(--chipline);border-radius:11px;padding:1px 9px;font-size:11.5px;color:var(--text)}
   .prop .k{color:var(--dim);font-family:var(--mono);font-size:10.5px;margin-right:5px}
-  /* the bot door row (kolu Dock-row pattern) */
+  /* the agent door row (kolu Dock-row pattern) */
   .doorbox{margin:4px 0 8px 24px;background:#f3f7ea;border:1px solid var(--line2);border-radius:8px;
            padding:7px 11px;max-width:560px;cursor:pointer;position:relative}
   .doorbox:hover{border-color:var(--accent)}
@@ -112,10 +112,10 @@
 <body>
 
 <header class="note">
-  <b>Prototype — node bots in olai's real interface.</b>
-  ❶ an <code>agent</code> prop makes a node a bot · ❷ the BOTS roster lives in the sidebar ·
-  ❸ a bot row wears a door + its last message · ❹ pressing either focuses the bot in the RIGHT panel ·
-  ❺ the panel names the node first; fresh session is safe · ❻ Ask on a botless row climbs to the nearest ancestor bot.
+  <b>Prototype — node agents in olai's real interface.</b>
+  ❶ an <code>agent</code> prop makes a node a NODE AGENT · ❷ the AGENTS roster lives in the sidebar ·
+  ❸ an agent row wears a door + its last message · ❹ pressing either focuses that agent in the RIGHT panel ·
+  ❺ the panel names the node first; fresh session is safe · ❻ Ask on an agentless row climbs to the nearest ancestor node agent.
 </header>
 
 <div class="chrome">
@@ -168,7 +168,7 @@
   <div class="page">
     <span class="filterbar">filter — words, "a phrase", a OR b, #tag, is:done, has</span>
 
-    <!-- the bot node, faithful row shape -->
+    <!-- the node-agent row, faithful shape -->
     <div class="node" style="position:relative"><span class="flownum" style="position:absolute;left:-26px;top:4px">1</span>
       <span class="glyph">•</span>
       <span class="title h">Xyne Spaces — the org OS</span><span class="meta">¶</span>
@@ -181,7 +181,7 @@
 
     <!-- ❸ the door: kolu Dock-row pattern, + last message -->
     <div class="doorbox" style="position:relative"><span class="flownum" style="position:absolute;left:-26px;top:10px">3</span>
-      <div class="l1"><span class="st wait"></span><b>xyne-spaces bot</b>
+      <div class="l1"><span class="st wait"></span><b>xyne-spaces agent</b>
         <span style="color:var(--dim)">· needs you · session 3 · memory: this subtree (14 rows)</span>
         <span class="ago">2m</span></div>
       <div class="last">⏸ Needs your word: digest timestamps in whose timezone? (options written to `xs-tz-question`) — <span style="color:var(--accent)">open in panel ❹ ➤</span></div>
@@ -200,14 +200,14 @@
         <span class="meta">waits on the mirror</span></div>
       <div class="node"><span class="glyph">✓</span><span class="title done">the layer-3 design is ratified</span></div>
 
-      <!-- ❻ a botless row: ask climbs -->
+      <!-- ❻ an agentless row: ask climbs -->
       <div class="node" style="position:relative"><span class="flownum" style="position:absolute;left:-26px;top:3px">6</span>
         <span class="glyph">☐</span><span class="title">connector: lane history into the context store</span>
-        <span class="meta">••• → Ask agent → routes to <b>xyne-spaces bot</b>, the nearest ancestor with a door</span></div>
+        <span class="meta">••• → Ask agent → routes to <b>xyne-spaces agent</b>, the nearest ancestor with a door</span></div>
     </div>
   </div>
 
-  <!-- ══ right panel: the focused bot ══ -->
+  <!-- ══ right panel: the focused agent ══ -->
   <div class="chat">
     <div class="chathead">
       <div class="r1"><div class="bmark" style="background:#4a5f8a;width:24px;height:24px">xs</div>
@@ -222,21 +222,21 @@
     <div class="scroll">
       <div class="sess"><span>session 3 · opened 16:40 · transcripts are history, the subtree is memory</span></div>
 
-      <div class="turn"><div class="who">xyne-spaces bot <span class="t">16:41</span></div>
+      <div class="turn"><div class="who">xyne-spaces agent <span class="t">16:41</span></div>
         <div class="body">Rehydrated from my subtree: the mirror lane is in flight, the steer PR waits on it by an <code>after</code> edge, one open question parked at <code>xs-tz-question</code>.</div></div>
 
       <div class="turn you"><div class="bubble"><div class="who">you <span class="t">16:44</span></div>
         <div class="body">what's blocking the connector item?</div></div></div>
 
-      <div class="turn"><div class="who">xyne-spaces bot <span class="t">16:44</span></div>
+      <div class="turn"><div class="who">xyne-spaces agent <span class="t">16:44</span></div>
         <div class="body">Nothing — it waits on the mirror by its edge. When that merges I'll surface it for dispatch and write the outcome to the row.</div></div>
 
-      <div class="turn"><div class="who">xyne-spaces bot <span class="t">16:52</span></div>
+      <div class="turn"><div class="who">xyne-spaces agent <span class="t">16:52</span></div>
         <div class="body notice">⏸ Needs your word: digest timestamps in whose timezone — the reader's browser, the team's declared zone, or UTC? Options + trade-offs written to my subtree at <code>xs-tz-question</code>.</div></div>
     </div>
 
     <div class="composer">
-      <div class="box">message the Xyne Spaces bot…</div>
+      <div class="box">message the Xyne Spaces agent…</div>
       <div class="under"><span class="mini">+</span><span class="mini">/</span><span class="send">send</span></div>
     </div>
   </div>
