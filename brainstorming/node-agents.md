@@ -33,6 +33,17 @@ The orchestrator has run exactly this model by hand since August: a conversation
 - **Pressing the door or a roster row switches the RIGHT panel to that agent** (ruled): the outline keeps its width; the panel's header names the NODE first (pressable), engine+model second, with `sessions (n)` and a **fresh session** affordance labeled with what it means ("memory is the subtree; the transcript becomes history").
 - Past chats demote to a per-agent detail: that agent's sessions.
 
+## Migrating existing chats (the human's question, 2026-09-01)
+
+Migration is **association, not conversion** — nothing moves on disk; session files stay wherever their agent keeps them.
+
+1. **Assign is one gesture.** The chats list gains a per-row "assign to node…" (`@` node-completion). It writes the node↔session pointer, and if the target node carries no `agent` prop yet, sets it to the chat's own engine. The old conversation becomes the node agent's CURRENT session, context intact — a home, not an abandonment.
+2. **One distillation turn banks the memory.** An old chat's knowledge lives only in its transcript, and the contract says the subtree is the memory — so an assigned session's first order is: *your memory is now this subtree; write your standing facts into it.* After that turn, the session is cattle like any other. (The orchestrator conversation is the degenerate case: its banking discipline ran all along, so its distillation is a no-op.)
+3. **Supersession lineage rides along.** The panel already infers /clear chains (which conversation replaced which); assigning a chat claims its chain as the node agent's session HISTORY, so "past sessions (n)" is populated from day one.
+4. **Incremental by construction.** Unassigned chats keep working exactly as today — a subset migrates one row at a time; there is no flag day.
+
+Honest note: the association is MACHINE-LOCAL (session ids do not travel between machines — the same reason the which-conversation note is per-machine state), while the `agent` prop is board-durable. A vault served from two machines gets one node agent with per-machine sessions, and the subtree-memory is what keeps them coherent.
+
 ## The three hard parts (to rule before any lane)
 
 1. **Write-back discipline is the whole trick.** Subtree-as-memory only works if the agent WRITES standing facts into its subtree — the orchestrator's law, re-read every boot. For arbitrary node agents it must be product: the boot/system prompt teaching "your subtree is your memory; write what a successor needs" — the parked `acp-system-prompt` roadmap item, promoted to this feature's keystone.
