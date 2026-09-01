@@ -115,7 +115,7 @@
   <b>Prototype — node agents in olai's real interface.</b>
   ❶ an <code>agent</code> prop makes a node a NODE AGENT · ❷ the AGENTS roster lives in the sidebar ·
   ❸ an agent row wears a door + its last message · ❹ pressing either focuses that agent in the RIGHT panel ·
-  ❺ the panel names the node first; fresh session is safe · ❻ Ask on an agentless row climbs to the nearest ancestor node agent.
+  ❺ the panel names the node first; fresh session is safe · ❻ Ask on an agentless row climbs to the nearest ancestor node agent · ❼ old chats wait under UNASSIGNED — assign each to a node by hand.
 </header>
 
 <div class="chrome">
@@ -135,7 +135,7 @@
   <div class="side">
     <div class="agenda"><span>Inbox</span><span class="badge">1</span></div>
 
-    <h3><span class="flownum">2</span> BOTS</h3>
+    <h3><span class="flownum">2</span> AGENTS</h3>
     <div class="bot"><div class="bmark" style="background:#2e6b45">ор</div>
       <div class="bn"><div class="t">The orchestrator</div>
         <div class="s"><span class="dot work"></span>fable · working…</div></div></div>
@@ -146,6 +146,15 @@
     <div class="bot"><div class="bmark" style="background:#7a5f3f">od</div>
       <div class="bn"><div class="t">Odu — the CI family</div>
         <div class="s"><span class="dot sleep"></span>opus · asleep</div></div></div>
+
+    <!-- ❼ previous chats, not yet anyone's -->
+    <div class="bot" style="position:relative"><span class="flownum" style="position:absolute;left:-2px;top:8px">7</span>
+      <div class="bmark" style="background:#5f7a6b;opacity:.7">?</div>
+      <div class="bn"><div class="t" style="color:var(--sdim)">Unassigned</div>
+        <div class="s">12 chats · assign each to a node</div></div></div>
+    <div class="row indent" style="font-size:11px;color:var(--sdim);white-space:normal;line-height:1.3">
+      opens in the panel: each old chat with «assign to node…» (@-completion);
+      assigning makes it that agent's current session, context intact</div>
 
     <h3>Pinned</h3>
     <div class="row"><span class="ic">📌</span>orchestrator.olai</div>

@@ -37,21 +37,27 @@ The orchestrator has run exactly this model by hand since August: a conversation
 
 Migration is **association, not conversion** — nothing moves on disk; session files stay wherever their agent keeps them.
 
-1. **Assign is one gesture.** The chats list gains a per-row "assign to node…" (`@` node-completion). It writes the node↔session pointer, and if the target node carries no `agent` prop yet, sets it to the chat's own engine. The old conversation becomes the node agent's CURRENT session, context intact — a home, not an abandonment.
+1. **Old chats wait under an UNASSIGNED roster entry** (the human's ruling, same evening): the sidebar's AGENTS section ends with an "Unassigned (n)" row holding every conversation no node claims. Opening it lists them in the panel, each with **"assign to node…"** (`@` node-completion). Assigning writes the node↔session pointer — and if the target node carries no `agent` prop yet, sets it to the chat's own engine. The old conversation becomes the node agent's CURRENT session, context intact — a home, not an abandonment.
 2. **One distillation turn banks the memory.** An old chat's knowledge lives only in its transcript, and the contract says the subtree is the memory — so an assigned session's first order is: *your memory is now this subtree; write your standing facts into it.* After that turn, the session is cattle like any other. (The orchestrator conversation is the degenerate case: its banking discipline ran all along, so its distillation is a no-op.)
 3. **Supersession lineage rides along.** The panel already infers /clear chains (which conversation replaced which); assigning a chat claims its chain as the node agent's session HISTORY, so "past sessions (n)" is populated from day one.
-4. **Incremental by construction.** Unassigned chats keep working exactly as today — a subset migrates one row at a time; there is no flag day.
+4. **Incremental by construction.** Unassigned chats keep working exactly as today — a subset migrates one row at a time; there is no flag day, and Unassigned may simply never empty.
 
 Honest note: the association is MACHINE-LOCAL (session ids do not travel between machines — the same reason the which-conversation note is per-machine state), while the `agent` prop is board-durable. A vault served from two machines gets one node agent with per-machine sessions, and the subtree-memory is what keeps them coherent.
 
-## The three hard parts (to rule before any lane)
+## The three hard parts
 
-1. **Write-back discipline is the whole trick.** Subtree-as-memory only works if the agent WRITES standing facts into its subtree — the orchestrator's law, re-read every boot. For arbitrary node agents it must be product: the boot/system prompt teaching "your subtree is your memory; write what a successor needs" — the parked `acp-system-prompt` roadmap item, promoted to this feature's keystone.
+1. **Write-back discipline is the whole trick.** Subtree-as-memory only works if the agent WRITES standing facts into its subtree — the orchestrator's law, re-read every boot. For arbitrary node agents it must be product: the boot/system prompt teaching "your subtree is your memory; write what a successor needs." **Ruled: this teaching ships INSIDE phase 1**, scoped to agent-associated sessions (the broader acp-system-prompt item stays its own thing).
 2. **Nested agents.** A node agent on a project and one on a lane beneath it share ground. Reads route by nearest-ancestor; writes need a rule — simplest: an agent writes only strictly inside its own subtree and ASKS its ancestor for anything above (the orchestrator's own stop-and-ask, generalized).
 3. **Session economics.** N node agents are not N processes: sessions spawn lazily on first message (or first wake in scope) and reap when idle; the roster chip stays honest about asleep-vs-broken — the kolu pill's three-state pattern.
 
-## Open questions parked for the design round
+## The phases (ruled with the human, 2026-09-01, question tool)
 
-- Does the orchestrator itself become the node agent on the orchestrator node on day one, or migrate last, after the pattern proves out on smaller agents?
-- Which engine CLIs can hold many concurrent sessions per directory cleanly (Claude sessions are per-directory files; grok/kimi session models need the same check)?
-- Does a wake under an agentless subtree climb to the nearest ancestor node agent, or stay silent? (Climbing makes the orchestrator the default catcher — probably right; it matches Ask-routing.)
+1. **Roster + switching.** The AGENTS sidebar section over `prop:agent`, the door + last message on agent rows, the right panel switching on press — and the subtree-memory teaching for agent-associated sessions (the keystone, ruled into this phase). Sessions bind via config/state; no assign UI, no new wake logic. Ships something visible and honest: the panel re-founded, working over hand-bound sessions.
+2. **Migration.** The Unassigned roster entry, the assign-to-node gesture, the distillation order, supersession lineage claiming, the fresh-session affordance. After this phase a person can move their real chats over, one row at a time.
+3. **Derived wakes.** A node agent's doorbell scope becomes its subtree, replacing the manual wake control for agent-bound conversations; **an agentless wake CLIMBS to the nearest ancestor node agent** (ruled) — the orchestrator ends up the root catcher, and nothing is silently lost. The manual control survives only for unassigned conversations.
+4. **Agency.** A node agent creates child nodes and associates agents with them — dispatch as product (create node, set `agent`, seat a session or a terminal), with the writes-stay-inside-the-subtree rule and stop-and-ask to the ancestor. The layer-3 binding (a node agent ↔ a Spaces bot/thread) rides here too.
+5. **The orchestrator migrates LAST** (ruled): once assign, distill, derived wakes and agency have proven out on smaller agents, the orchestrator conversation is assigned to the orchestrator node — the no-op distillation — and the manual boot-chain era ends as product catches up with practice.
+
+## Still open for the design round
+
+- Which engine CLIs can hold many concurrent sessions per directory cleanly (Claude sessions are per-directory files; grok/kimi session models need the same check) — a fact-check, not a ruling.
