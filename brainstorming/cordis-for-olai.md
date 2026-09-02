@@ -298,7 +298,7 @@ Answers from [juspay/olai#472](https://github.com/juspay/olai/pull/472), each ba
 
 ## 9. Next gen (optional): olai as a Cordis application
 
-*Tagged optional on the human's word, 2026-09-02. Phases 1 to 8 make the plugin **system** a runtime and leave the composition root as the host the plugins hang off. This section is what it would take to go where the paper and dsh go: no privileged core, every part a row. It is not on the plan; it is here so the choice is a reading rather than a rediscovery.*
+*Tagged optional on the human's word, 2026-09-02. Phases 1 to 9 make the plugin **system** a runtime and leave the composition root as the host the plugins hang off. This section is what it would take to go where the paper and dsh go: no privileged core, every part a row. It is not on the plan; it is here so the choice is a reading rather than a rediscovery.*
 
 **What the plan above does not do.** After phase 9, `runtime.ts`'s `bind()` and `serve.ts` are still one fixed function that composes the store, the documents and outlines surface, the chat, git, identity, index, ops, the MCP face and the websocket listener, and plugins are what it mounts. That root is not a component, so the paper's guarantees (recovery, ordering, confluence) stop at its edge: they hold for what is mounted and say nothing about the thing doing the mounting. dsh has no such edge; its session log, tool registry, model adapter and agent loop are rows, and `--dump-config` prints the product.
 
