@@ -165,7 +165,7 @@ Delivery policy (idle takes it as a turn; busy holds; nobody there queues) is a 
 
 ### 4.4 Node agents are scopes
 
-The node-agents plan says: sessions spawn lazily, reap when idle, are capped; each carries its own MCP servers, its subtree as wake scope, and a write rule ("an agent writes only strictly inside its own subtree and asks its ancestor for anything above"). Today `agent.ts` holds one `session: string | null` and phase 2 is "hold a map".
+Node agents are on master (phase 1 of that plan: the roster over `prop:agent`, the door on agent rows, the panel switching, the subtree-memory teaching). What is not on master is concurrency: `agent.ts` still holds one `session: string | null`, so an agent that is not the open one has no process. The plan's phase 2 says "hold a map", and its later phases say sessions spawn lazily, reap when idle, are capped, and each carries its own MCP servers, its subtree as wake scope, and a write rule ("an agent writes only strictly inside its own subtree and asks its ancestor for anything above").
 
 dsh's `createScope` is the exact shape:
 
@@ -242,7 +242,7 @@ Each phase is one PR, green alone.
    - **Pin hygiene rides along**: `@cordisjs/plugin-include` and `-group` join the pin; the `@ts-nocheck` stamp goes (typecheck the pin under olai's `tsc` or file the delta upstream); the `exports` rewrite covers every imported subpath; `FiberState` is filed upstream as a regular enum or const object and the local numbering is deleted.
    - **Not started in this lane**: HMR (no Bun cache bust exists, §5); intercept in the store (it belongs on the `vault` service, §8); browser slots (phase 5); node-agent scopes (phase 4). Retire `.worktrees/cordis-spike` when the draft closes.
 3. **Agents as plugins** (the roster lane, unchanged in intent): `olai-plugin-claude` / `-opencode` / `-pi`, each registering on `ctx.agents`; `AGENTS` in `@olai/surface` becomes the data that registry emits.
-4. **Node agents as scopes.** `createScope` per node; sessions are fibers; the subtree write fence is `intercept` metadata on `vault`; reaping is dispose; derived wakes are the session subscribing to `vault/revision` filtered by its subtree. This is phases 2 and 4 of the node-agents plan as lifecycle rather than a map.
+4. **Node agents as scopes.** `createScope` per node; sessions are fibers; the subtree write fence is `intercept` metadata on `vault`; reaping is dispose; derived wakes are the session subscribing to `vault/revision` filtered by its subtree. Node-agents phase 1 (roster and switching) is already on master; this phase delivers node-agents phase 2 (concurrency) and phase 4 (derived wakes) as lifecycle rather than as a map in `agent.ts`.
 5. **Browser slots.** `ctx.slots` in the SolidJS client replaces the four registries.
 6. **Loader surface**: `olai --dump-config`, `olai plugin add`, a preferences page that writes `disabled` onto rows (the nix option writes the same overlay, so both stay honest about which one spoke). HMR in dev only if a Bun cache bust is found (§5); until then a config edit that flips `disabled` is the reload.
 7. **The orchestrator as a profile** (see §7): `olai orchestrate` stacks the base bundle with a driver group (wake listener, gate policy, dispatch tools) over the same context, the way dsh's agent loop is a plugin.
