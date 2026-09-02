@@ -183,12 +183,14 @@ Only after B:
 
 ## Suggested PR cut
 
+The Layer column numbers the **Layer A proposals** above (A1–A8), not the problem headings under "A. There is a mode".
+
 | PR | Layer | What lands | Gate |
 |---|---|---|---|
 | 1 | A1+A2 | caret-at-click; type-into-focused-outline | Playwright: click at 8px, caret is 0 or 1, not `length`. Type with no prior click inserts into a row. |
-| 2 | A3+A5 | Enter at column 0 inserts a draft above; multiple empty drafts on screen | Enter Enter Enter yields three ghosts. Enter at 0 does not teleport to the subtree floor. |
-| 3 | A paste + format keys | newline/tab clipboard → `add_node` tree; Ctrl+B wraps `**` | The beer/party paste becomes three nested rows. |
-| 4 | A keys | zoom, fold, Ctrl+O, Mac move chord, delete-or-confirm | The Workflowy chord table, minus bullet-types. |
+| 2 | A3+A4 | Enter at column 0 inserts a draft above; multiple empty drafts on screen | Enter Enter Enter yields three ghosts. Enter at 0 does not teleport to the subtree floor. |
+| 3 | A5+A6 | newline/tab clipboard → `add_node` tree; Ctrl+B wraps `**` | The beer/party paste becomes three nested rows. |
+| 4 | A7 | zoom, fold, Ctrl+O, Mac move chord, delete-or-confirm | The Workflowy chord table, minus bullet-types. |
 | 5 | B | continuous caret, local blank slots, note-click-is-caret | The test in Layer B. |
 | 6 | C | agenda/day edit by node id | Click `order the new cabinets` on `/agenda`, type, it writes. |
 
