@@ -87,7 +87,9 @@ Landed as the ghost *"buy beer  garden party    invite neighbours backup plan"*.
 Select all, Ctrl+B: value still `the compost heap`. No markdown wrap, no toolbar. Titles already *render* `**bold**` (#84). The keys should write the markdown the renderer already understands.
 
 **C3. Long titles ellipsize. PAIN.**
-A 1113px sentence in an 882px cell, `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. On a 390px phone, `order the new cabinets` is `order the...`. The quiet-outline ruling (a row is a line) is why. Workflowy wraps. You cannot edit what you cannot see, and click-to-end (A2) on an ellipsized title is strictly worse.
+A 1113px sentence in an 882px cell, `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. On a 390px phone, `order the new cabinets` is `order the...`. The quiet-outline ruling (a row is a line) is why. Workflowy wraps.
+
+**CORRECTED 2026-09-03 (the human: "A8 is false"), and the correction is this heading's too.** The claim that you cannot edit what you cannot see does not hold. The ellipsis is on the READ face only: the editor's `<input>` carries `ROW_TITLE`, which is `font-serif text-[1rem] leading-[1.5]` and nothing else — no `truncate`, no `text-ellipsis` — and a native single-line input scrolls its content horizontally under the caret. So an open editor always shows the text around the caret, however long the title. What remains true here is a READING complaint (a long row reads as `order the...`), which is exactly what the quiet-outline ruling chose, and it is Open Question 3, not a defect.
 
 ### D. Notes are a second object.
 
@@ -140,14 +142,16 @@ Three layers. A is a week. B is the actual product. C is the rest of the app cat
 
 Stay on `<input>`. Stop throwing information away.
 
-1. **Caret-at-click.** On `clickTitle`, measure the glyph offset into the rendered title (a hidden copy of the text, or `document.caretPositionFromPoint` on the span *before* unmounting it) and pass that index into `takeCaret`'s `at`. The comment that says "a click on a title means the end" is the bug. This one change removes the worst Workflowy break.
-2. **Click focuses; letters are not a mode.** If no draft is open and the user types a character with the outline focused, open the last-focused row (or the first visible row) at its end and insert. Never swallow keys into `BODY`.
-3. **Enter at column 0 inserts a draft *above*.** Still a draft, still writes nothing until it has a title. The current "add after the subtree" reading is what you want at *end* of line, not at *start*.
-4. **Several local drafts.** One caret, but abandoned empty siblings may remain on screen as drafts until the page closes — or, cheaper, Enter on an empty draft opens the *next* empty draft without collapsing the first. Disk still sees nothing. This is how Enter Enter Enter becomes a skeleton without weakening `a node needs a title`.
-5. **Paste parser.** On paste into a title (or a new-row draft), if the clipboard has newlines or leading tabs, do not put it in the `<input>`. Parse a tab-indented outline and send one `add_node` with `children` (the op already takes a tree). Flattening to one line is the worst possible answer.
-6. **Format keys write markdown.** Ctrl/Cmd+B/I/U wrap the selection in `**` / `*` / nothing-olai-renders-as-underline (skip U, or wrap `<u>` if the title renderer grows it). No toolbar required for A.
-7. **Bind the missing navigation keys.** Zoom in/out, fold, Ctrl+O for the page's done-hidden, platform-correct move-among-siblings on Mac (Cmd+Shift+↑/↓). Delete stays the human's; until that ruling, at least bind Ctrl/Cmd+Shift+Backspace to the same confirm the menu already asks.
-8. **Wrap titles, or wrap while editing.** Ellipsis on the read face is a reading choice. Ellipsis on the *edit* face is uneditable text. At minimum the open `<input>` wraps (or the row grows). The quiet-outline ruling can stay for unread rows.
+**Where it stands, 2026-09-03.** A1 shipped as [#475](https://github.com/juspay/olai/pull/475); A3 and A4 as [#477](https://github.com/juspay/olai/pull/477); A7 as [#485](https://github.com/juspay/olai/pull/485). A2 is REJECTED and A8 is WITHDRAWN AS FALSE, both by the human 2026-09-03. What is left of Layer A is A5 and A6, which are one PR.
+
+1. **Caret-at-click.** *SHIPPED, #475.* On `clickTitle`, measure the glyph offset into the rendered title (a hidden copy of the text, or `document.caretPositionFromPoint` on the span *before* unmounting it) and pass that index into `takeCaret`'s `at`. The comment that says "a click on a title means the end" is the bug. This one change removes the worst Workflowy break.
+2. ~~**Click focuses; letters are not a mode.**~~ **REJECTED by the human, 2026-09-03: "I reject A2, it is silly."** The proposal was that typing a character with the outline focused and no draft open would open the last-focused row (or the first visible row) at its end and insert there. It is not built and it is not to be built: guessing which row a bare keystroke meant is the silliness. Clicking, or arrowing in Layer B, is how a caret gets somewhere. Nothing else in Layer A depends on it.
+3. **Enter at column 0 inserts a draft *above*.** *SHIPPED, #477.* Still a draft, still writes nothing until it has a title. The current "add after the subtree" reading is what you want at *end* of line, not at *start*.
+4. **Several local drafts.** *SHIPPED, #477.* One caret, but abandoned empty siblings may remain on screen as drafts until the page closes — or, cheaper, Enter on an empty draft opens the *next* empty draft without collapsing the first. Disk still sees nothing. This is how Enter Enter Enter becomes a skeleton without weakening `a node needs a title`.
+5. **Paste parser.** *OPEN.* On paste into a title (or a new-row draft), if the clipboard has newlines or leading tabs, do not put it in the `<input>`. Parse a tab-indented outline and send one `add_node` with `children` (the op already takes a tree). Flattening to one line is the worst possible answer.
+6. **Format keys write markdown.** *OPEN.* Ctrl/Cmd+B/I/U wrap the selection in `**` / `*` / nothing-olai-renders-as-underline (skip U, or wrap `<u>` if the title renderer grows it). No toolbar required for A.
+7. **Bind the missing navigation keys.** *SHIPPED, #485.* Zoom in/out, fold, Ctrl+O for the page's done-hidden, platform-correct move-among-siblings on Mac (Cmd+Shift+↑/↓). Delete stays the human's; until that ruling, at least bind Ctrl/Cmd+Shift+Backspace to the same confirm the menu already asks.
+8. ~~**Wrap titles, or wrap while editing.**~~ **WITHDRAWN AS FALSE by the human, 2026-09-03: "A8 is false."** Its premise was "ellipsis on the edit face is uneditable text", and the code says otherwise: the editor's `<input>` carries only `ROW_TITLE` (`font-serif text-[1rem] leading-[1.5]`) with no truncation, and a single-line input scrolls horizontally under the caret, so the text at the caret is always visible however long the title. The ellipsis is the read face's alone, which is the quiet-outline ruling doing what it was chosen to do. Whether a read row should wrap stays Open Question 3 — a reading preference, not an editing defect. C3 above is corrected to match.
 
 Layer A does not make olai feel like Workflowy. It makes the current editor stop lying about the click, the paste, and the blank line.
 
@@ -163,6 +167,8 @@ Replace "click a title, mount an input" with a continuous caret over the tree.
 - New rows are real rows in the tree widget *locally* (a draft slot with a bullet, indent, Tab, arrows), committed when they have a title, dropped if still empty when the caret has been elsewhere and idle. The ghost placeholder goes away.
 - Split/indent still wait on the file. The caret-follow primitive that `editing.tsx` already owns is the whole of the wait; the row must not *look* like it hasn't moved. A 100ms local indent, confirmed by the file, is not optimistic UI of the kind the design forbade — the forbidden thing was two tabs disagreeing about what landed. A caret sliding under the parent, then snapping if the write is refused, is a draft of *position*, which we already do for *text*.
 
+**Note on the third bullet, 2026-09-03.** "The first character you type in a rendered row opens the field at that character" is NOT A2 coming back. A2 was about a keystroke with no row under the caret, which the human rejected; this is a keystroke on a row the caret is already walking, where the target is unambiguous. If Layer B is ever built, that distinction is the one to hold.
+
 **What not to build**
 
 - A contenteditable of the whole page. Paste-as-HTML, caret vs live frames, innerHTML → title string: the 2026-08-09 argument still holds.
@@ -171,7 +177,7 @@ Replace "click a title, mount an input" with a continuous caret over the tree.
 
 **The test**
 
-A person who has used Workflowy for a decade sits down, does not click, types, hits Enter three times, Tab, paste a shopping list, clicks a typo in the middle of a long bullet, and never sees a placeholder, a refusal, a source-swap they didn't ask for, or a caret at the wrong end. If any of those happen, B is not done.
+A person who has used Workflowy for a decade sits down, types into the row they clicked, hits Enter three times, Tab, pastes a shopping list, clicks a typo in the middle of a long bullet, and never sees a placeholder, a refusal, a source-swap they didn't ask for, or a caret at the wrong end. If any of those happen, B is not done. (The original wording began "does not click" — that was A2's test, and A2 is rejected.)
 
 ### Layer C — every surface is the outline
 
@@ -185,16 +191,16 @@ Only after B:
 
 The Layer column numbers the **Layer A proposals** above (A1–A8), not the problem headings under "A. There is a mode".
 
-| PR | Layer | What lands | Gate |
-|---|---|---|---|
-| 1 | A1+A2 | caret-at-click; type-into-focused-outline | Playwright: click at 8px, caret is 0 or 1, not `length`. Type with no prior click inserts into a row. |
-| 2 | A3+A4 | Enter at column 0 inserts a draft above; multiple empty drafts on screen | Enter Enter Enter yields three ghosts. Enter at 0 does not teleport to the subtree floor. |
-| 3 | A5+A6 | newline/tab clipboard → `add_node` tree; Ctrl+B wraps `**` | The beer/party paste becomes three nested rows. |
-| 4 | A7 | zoom, fold, Ctrl+O, Mac move chord, delete-or-confirm | The Workflowy chord table, minus bullet-types. |
-| 5 | B | continuous caret, local blank slots, note-click-is-caret | The test in Layer B. |
-| 6 | C | agenda/day edit by node id | Click `order the new cabinets` on `/agenda`, type, it writes. |
+| PR | Layer | What lands | Gate | State |
+|---|---|---|---|---|
+| 1 | A1 | caret-at-click | Playwright: click at 8px, caret is 0 or 1, not `length`. | **shipped** [#475](https://github.com/juspay/olai/pull/475) |
+| 2 | A3+A4 | Enter at column 0 inserts a draft above; multiple empty drafts on screen | Enter Enter Enter yields three ghosts. Enter at 0 does not teleport to the subtree floor. | **shipped** [#477](https://github.com/juspay/olai/pull/477) |
+| 3 | A5+A6 | newline/tab clipboard → `add_node` tree; Ctrl+B wraps `**` | The beer/party paste becomes three nested rows. | **open — all that is left of Layer A** |
+| 4 | A7 | zoom, fold, Ctrl+O, Mac move chord, delete-or-confirm | The Workflowy chord table, minus bullet-types. | **shipped** [#485](https://github.com/juspay/olai/pull/485) |
+| 5 | B | continuous caret, local blank slots, note-click-is-caret | The test in Layer B. | not started, needs the human's word |
+| 6 | C | agenda/day edit by node id | Click `order the new cabinets` on `/agenda`, type, it writes. | not started, gated on 5 |
 
-PR 1 is the one that should have shipped with `self-edit`. It is also the only one that can land without a design argument.
+PR 1 shipped without its A2 half, which the human rejected on 2026-09-03; A8 was in no PR of this cut and is withdrawn as false. So Layer A closes when PR 3 lands.
 
 ## Open questions for the human
 
@@ -202,7 +208,7 @@ These were already open; driving the browser did not close them:
 
 1. **Delete key.** 2026-08-11 deferred. The menu already puts a subtree in Trash behind a confirm. Binding Ctrl/Cmd+Shift+Backspace to that confirm is the Workflowy chord without inventing a shredder. A bulk chord is still the dangerous one.
 2. **Empty titles on disk.** Layer A/B keep the format. If that ever changes, sketching gets simpler and git gets noisier. I would not change it.
-3. **Title wrap vs the quiet outline.** Ellipsis is a reading choice that fights editing. Wrap-while-editing is the compromise; wrap-always is the Workflowy one.
+3. **Title wrap vs the quiet outline.** Narrowed 2026-09-03 by the A8 correction: this is a READING question only, since the edit face never truncates. Does a long row wrap when you are looking at it, or keep the ellipsis the quiet-outline ruling chose?
 4. **Should agenda/day be editors.** Layer C argues yes, by node id. The original ban was about a caret in a *query*. If that ban is load-bearing for another reason, C becomes "click through to the home outline" and the feel stays split.
 
 ## What this is not
