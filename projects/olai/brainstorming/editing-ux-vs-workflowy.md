@@ -1,216 +1,267 @@
-# Editing UX vs Workflowy — driven 2026-09-02
+# Editing UX vs Workflowy
 
-Status: assessment + proposal. Not a rewrite of [editing-web.md](editing-web.md) (that file is the 2026-08 research the editor was *built from*). This is what a Workflowy hand actually hits in the browser today, after that editor shipped.
+**TL;DR.** Olai's outline is a viewer you switch into an editor; Workflowy is an editor you can view. A 2026-09-02 browser drive found seventeen concrete differences. They are being closed in three phases. Phase 1 (make the `<input>` honest) is three PRs shipped and one PR left: the paste parser and the format keys. Phase 2 (the caret walks the tree) and Phase 3 (agenda and day pages become editable) are not started and wait on the human's word. Both were recut on 2026-09-03 after a read of the client code showed the original plan's Phase 2 asking for a state the editor does not have, and its Phase 3 leaning on a door that does not exist; the recut is smaller and says what is structural.
 
-Method: `just serve` on the `good` fixture, Playwright driving `http://127.0.0.1:7788` the way a person types — click, type, Enter, Tab, paste, arrows, chords, agenda, day, phone viewport. Screenshots under `/tmp/olai-uireview-shots/`.
+Driven 2026-09-02. State as of 2026-09-03.
 
-The 2026-08-12 inventory already listed missing *features* (paste-as-tree, format keys, delete key, bullet types). The thing that sucks is not the missing menu entries. It is that **the outline is a viewer you switch into an editor**, and Workflowy is **an editor you can view**.
+This is not a rewrite of [editing-web.md](editing-web.md), which is the 2026-08 research the editor was built from. This is what a Workflowy hand hits in the browser after that editor shipped, and the plan for closing the gap.
 
-## The diagnosis
+## Method
 
-Three design choices, all deliberate, compose into the feel:
+`just serve` on the `good` fixture, Playwright driving `http://127.0.0.1:7788` the way a person types: click, type, Enter, Tab, paste, arrows, chords, agenda, day page, phone viewport.
 
-1. **A title is an `<input>`**, mounted on click, unmounted on blur. `RowEditor.tsx`: *"Absent is the end of the text, which is what a click on a title means."* `takeCaret` focuses and `setSelectionRange(length, length)`.
-2. **Nothing is optimistic.** Structural keys are intents; the row moves when the file says so. Empty titles are illegal on disk, so a new row is a ghost draft until it has words.
-3. **Only outline and zoom pages are editable.** Agenda and day are query views. Notes are a second field behind a ¶ / clamped preview.
+The 2026-08-12 inventory in editing-web.md listed missing *features* (paste-as-tree, format keys, delete key, bullet types). The finding here is that the missing menu entries are not the problem. The problem is the mode.
 
-Workflowy's model, from the help pages driven against: click any character, the caret is there; Enter always makes a real bullet, including empty; Tab is the same frame; paste of indented text is a tree; notes are already under the bullet; zoom/collapse/search are keys; every filtered view is still the same document.
+## Diagnosis
 
-Olai copied Workflowy's *chords* (Tab, Shift+Tab, Ctrl+Enter, Shift+Enter, (( , ! , #) and not its *continuity*.
+Three deliberate design choices compose into the feel:
+
+1. **A title is an `<input>`**, mounted on click, unmounted on blur.
+2. **Nothing is optimistic.** Structural keys are intents; the row moves when the file says so. Empty titles are illegal on disk, so a new row is a local draft until it has words.
+3. **Only outline and zoom pages are editable.** Agenda and day pages are query views. Notes are a second field behind a ¶.
+
+Workflowy's model, driven from its help pages: click any character and the caret is there; Enter always makes a bullet, even an empty one; paste of indented text is a tree; notes sit under the bullet; zoom, collapse and search are keys; every filtered view is still the same document.
+
+Olai copied Workflowy's *chords* and not its *continuity*.
+
+## The root constraint
+
+Three rules hold the current design up:
+
+- The format will not hold an empty title.
+- The wire will not echo a write.
+- The title editor will not be `contenteditable`, because a title is one verbatim string and a live frame would fight the caret.
+
+All three are right for git and for agents. The plan keeps the first two (empty-on-disk stays illegal; the file stays the truth) and, in Phase 2, replaces the third with something that is still not `contenteditable`.
 
 ## What is already fine
 
-Do not "fix" these — they match, or they are olai on purpose:
+Do not "fix" these. They match Workflowy, or they are olai on purpose:
 
-- Tab / Shift+Tab indent. Measured ~110ms to land. Acceptable.
-- Ctrl/Cmd+Enter completes. Glyph click zooms (Workflowy too).
-- `((` mirrors, `!` dates, `#`/`@` tags, ⌘⇧D duplicate, ⌘⇧M move-to, drag-a-bullet, the five multi-select gestures, ••• menu.
-- Backspace at column 0 merges (round trip, but it merges).
-- Split at caret exists and keeps children on the first half.
+- Tab / Shift+Tab indent, ~110ms to land.
+- Ctrl/⌘+Enter completes. Glyph click zooms (Workflowy too).
+- `((` mirrors, `!` dates, `#`/`@` tags, ⌘⇧D duplicate, ⌘⇧M move-to, drag-a-bullet, the five multi-select gestures, the ••• menu.
+- Backspace at column 0 merges.
+- Split at the caret keeps children on the first half.
 - No last-write-wins, no `#copy` tag, no completing-a-parent-completes-children. Keep those refusals.
 
-## Problems, by cause
+## Problems found, and where each stands
 
-Severity: **blocker** = a Workflowy hand cannot do the thing at all. **pain** = they can, but the feel is wrong every time. **friction** = extra click, missing chord, or a surface that is read-only. **gap** = listed in 2026-08-12 and still missing.
+Severity: **blocker** = a Workflowy hand cannot do the thing at all. **pain** = they can, but the feel is wrong every time. **friction** = an extra click or a missing chord. **gap** = listed in 2026-08-12 and still missing.
 
-### A. There is a mode. Workflowy has none.
+Each problem ends with its state. "Fixed" names the PR. "Phase 2" or "Phase 3" means the fix is in a later phase below. "Stays" means it was ruled to remain as it is.
 
-**A1. Typing does nothing until you click a title. BLOCKER.**
-Focus is `BODY`. There is no caret in the outline. Workflowy: the caret is always in some bullet; you just type.
+### A. There is a mode
 
-**A2. Click does not place the caret. BLOCKER.**
-Clicked 8px from the left of `choose the handles` (18 characters). Caret landed at 18/18. Clicked at 40% of `kitchen remodel #home`. Caret landed at end. The span is torn down and an `<input>` is mounted; the click's X is thrown away. `takeCaret` then puts the caret at `value.length`.
+**A1. Typing does nothing until you click a title.** Blocker as found.
+Focus is `BODY`; there is no caret in the outline. Workflowy's caret is always in some bullet.
+*State: stays.* The proposed fix (a bare keystroke opens the last-focused or first visible row) was rejected by the human on 2026-09-03: "I reject A2, it is silly." Guessing which row a keystroke meant is the silliness. A caret gets somewhere by clicking, or by arrowing in Phase 2.
 
-This is the single most important defect. A Workflowy hand clicks the typo they saw. Olai opens an editor at the other end of the line.
+**A2. A click does not place the caret.** Blocker.
+Clicking 8px into an 18-character title put the caret at 18. The click's X was thrown away when the span was torn down and the `<input>` mounted at `value.length`.
+*State: fixed, [#475](https://github.com/juspay/olai/pull/475).* A press on a title measures the source string in that title's font and opens the input at that offset. A press on the filler to the right of the title is still the end of the line. The input now uses the title's own type and leading, so the row does not jump on open.
 
-**A3. The read face and the edit face are different documents. PAIN.**
-`#home` is a coloured chip until click, then raw `#home` in an input. Shift+Enter on a note shows `**walnut**` and `*birch*` as source; the preview one click earlier rendered them bold/italic. The row washes. Tags restyle. The outline around you is still the read face, so you are the only row in "source mode."
+**A3. The read face and the edit face are different documents.** Pain.
+`#home` is a coloured chip until click, then raw `#home` in an input. A note's `**walnut**` renders bold one click earlier and shows as source in the textarea.
+*State: stays, by design.* docs/editing.md says it plainly: what you type is the source, and the rendering comes back the moment you leave. Phase 2 keeps this rule.
 
-**A4. Left/Right at the ends of a line do not leave the row. PAIN.**
-Home, then Left: still `pick the knobs` at 0. Workflowy treats the outline as one text stream: Left at column 0 is the end of the bullet above. Olai's arrows between rows are Up/Down only, and each hop closes one input and opens another *at the end*.
+**A4. Left/Right at the ends of a line do not leave the row.** Pain.
+Workflowy treats the outline as one text stream: Left at column 0 is the end of the bullet above. Olai's row-to-row arrows are Up/Down only, and each hop closes one input and opens another at the end.
+*State: Phase 2.*
 
-**A5. Escape throws the draft away. FRICTION.**
-Typed ` xyz` on `garden`, Escape: title is `garden #outdoors` again. Workflowy's Escape is search. Letters already belong to the document, so there is nothing to discard.
+**A5. Escape throws the draft away.** Friction.
+Typed ` xyz` on `garden`, pressed Escape: the title is `garden #outdoors` again. Workflowy's Escape is search; letters already belong to the document.
+*State: open, not in any phase.* Escape stays "drop what you were typing" per docs/editing.md. It is listed in the chord table below.
 
-### B. Blank bullets cannot exist. Outlining is sketching blanks.
+### B. Blank bullets cannot exist
 
-**B1. Enter Enter Enter does not make a list. BLOCKER.**
-Five Enters on `the compost heap`: one ghost, placeholder *"a new line — type it, and Enter makes the next one."* Empty drafts write nothing (correct for git). The cost is you cannot lay out a skeleton and fill it in. That *is* outlining.
+**B1. Enter Enter Enter does not make a list.** Blocker.
+Five Enters made one ghost. You could not lay out a skeleton and fill it in, which is what outlining is.
+*State: fixed, [#477](https://github.com/juspay/olai/pull/477).* Enter on an empty draft parks it and opens the next one. Leaving an empty draft (blur, click-away) parks it too; Escape drops the one you are in; closing the page drops them all. Disk still sees nothing until a draft has a title.
 
-**B2. Enter at column 0 does not insert above. PAIN.**
-Caret at 0 on a titled row, Enter: a ghost sibling appears *after the entire subtree*, at the bottom of the page. Documented: empty titles are illegal, so this is `add` not insert-above. Workflowy: Enter at column 0 puts a blank bullet above and keeps your words where they were. That is how you make space.
+**B2. Enter at column 0 does not insert above.** Pain.
+Enter at the start of a titled row put a ghost after the entire subtree, at the bottom of the page.
+*State: fixed, [#477](https://github.com/juspay/olai/pull/477).* Enter at column 0 opens a draft above the row; the words stay put. The wire gained a `before` anchor, judged where every other placement is judged. Enter at end of line still adds after the subtree.
 
-**B3. Split of a parent teleports the caret. PAIN.**
-Split `kitchen remodel #home — extra` in the middle: first half stays the section (children intact), second half `odel #home — extra` appears as a new top-level *below the whole tree*. You were typing at the top; you are now at the bottom. Semantics match Workflowy (children stay with the first half). The teleport is the no-optimistic-UI + "sibling after subtree" combination, made worse because the new half is an input on a washed row a screen away.
+**B3. Splitting a parent teleports the caret.** Pain.
+Split a section title in the middle: the first half stays the section with its children, the second half appears as a new row below the whole subtree, a screen away. The semantics match Workflowy; the teleport is "no optimistic UI" plus "sibling after subtree".
+*State: Phase 2, PR 8.* A placement question before any UI: see open question 6.
 
-**B4. Clearing a title is refused. PAIN.**
-Select-all, Backspace, Enter: red *"a node needs a title"* under an empty input. The row cannot exist as a blank. Workflowy: blank bullets are first-class.
+**B4. Clearing a title is refused.** Pain.
+Select-all, Backspace, Enter: "a node needs a title". Workflowy's blank bullets are first-class.
+*State: stays.* Empty titles on disk are the root constraint. Blanks are local drafts only (B1, and Phase 2's local slots).
 
-**B5. The new-row ghost is not a bullet. PAIN.**
-Hollow circle, muted placeholder, no Tab until it has a title, click-away destroys it. It often renders far from the key that created it.
+**B5. The new-row ghost is not a bullet.** Pain.
+Hollow circle, muted placeholder, no Tab until it has a title.
+*State: partly fixed by #477* (ghosts persist and can be clicked back into). A draft that takes Tab, indent and arrows like a real row is *Phase 2*.
 
-### C. An `<input>` cannot be a tree.
+### C. An `<input>` cannot be a tree
 
-**C1. Paste of a nested list is one line. BLOCKER.**
-Clipboard:
+**C1. Paste of a nested list is one line.** Blocker.
+A four-line tab-indented clipboard landed as one flattened ghost. Newlines cannot live in an `<input>`. This is the capture path Workflowy is loved for.
+*State: open, Phase 1 PR 3.*
 
-```
-buy beer
-\tgarden party
-\t\tinvite neighbours
-backup plan
-```
+**C2. Ctrl+B / Ctrl+I do nothing.** Gap.
+Titles already render `**bold**`. The keys should write the markdown the renderer already reads.
+*State: open, Phase 1 PR 3.*
 
-Landed as the ghost *"buy beer  garden party    invite neighbours backup plan"*. Newlines cannot live in an `<input>`. Node count unchanged. This is the capture path Workflowy is loved for, still MISSING from the 2026-08-12 inventory, and now confirmed in the browser as a flatten, not a no-op.
+**C3. Long titles ellipsize on the read face.** Reading complaint, not an editing defect.
+A row is one line under the quiet-outline ruling, so a long title reads as `order the...`, harder on a 390px phone. The edit face is unaffected: the editor's `<input>` carries no truncation and a native single-line input scrolls under the caret, so the text at the caret is always visible.
+*State: stays; see open question 3.* An earlier claim that the ellipsis made text uneditable was withdrawn by the human on 2026-09-03 ("A8 is false").
 
-**C2. Ctrl+B / Ctrl+I do nothing. GAP.**
-Select all, Ctrl+B: value still `the compost heap`. No markdown wrap, no toolbar. Titles already *render* `**bold**` (#84). The keys should write the markdown the renderer already understands.
+### D. Notes are a second object
 
-**C3. Long titles ellipsize. PAIN.**
-A 1113px sentence in an 882px cell, `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. On a 390px phone, `order the new cabinets` is `order the...`. The quiet-outline ruling (a row is a line) is why. Workflowy wraps.
+**D1. The clamped preview is not the note.** Pain.
+Clicking the one-line preview expands the rendered note and does not place a caret. A second click, or Shift+Enter from the title, opens a textarea of source. Workflowy: one click, caret where you pressed.
+*State: Phase 2.* The source swap is allowed (A3); the extra click is not.
 
-**CORRECTED 2026-09-03 (the human: "A8 is false"), and the correction is this heading's too.** The claim that you cannot edit what you cannot see does not hold. The ellipsis is on the READ face only: the editor's `<input>` carries `ROW_TITLE`, which is `font-serif text-[1rem] leading-[1.5]` and nothing else — no `truncate`, no `text-ellipsis` — and a native single-line input scrolls its content horizontally under the caret. So an open editor always shows the text around the caret, however long the title. What remains true here is a READING complaint (a long row reads as `order the...`), which is exactly what the quiet-outline ruling chose, and it is Open Question 3, not a defect.
+### E. Only some pages are the outline
 
-### D. Notes are a second object.
+**E1. Agenda is not editable.** Pain.
+`/agenda` drew a row three weeks late. Clicking it opened nothing. Workflowy: a saved search is still the bullets.
+*State: Phase 3.*
 
-**D1. The clamped preview is not the note. PAIN.**
-`order the new cabinets` shows *"Two ways to go:"* under the title (cozy density). Clicking that line expands the rendered note (walnut bold, see-links) and does **not** put a caret in it. Second click, or Shift+Enter from the title, opens a textarea of source. Workflowy: the note is already under the bullet, one click, caret where you pressed, no source swap.
+**E2. A day page is not editable.** Pain.
+`/d/2026-08-10` lists the same node plus a daily-note bullet. The dated rows are scenery.
+*State: Phase 3.*
 
-The 2026-08-11 revision already rejected "Shift+Enter opens an ugly textarea" and landed in-place styling. The remaining gap is the extra click and the source swap, both forced by "rendered markdown is a reading surface we must not destroy on the first press."
+**E3. Zoom is a different page, and had no keys.** Friction.
+Glyph click navigates to `/#id` with new chrome. Workflowy zoom is the same document, and has keys.
+*State: keys fixed, [#485](https://github.com/juspay/olai/pull/485)* (Alt/⌘+. zooms in, Alt/⌘+, zooms out, Ctrl+Space folds, Ctrl/⌘+↑/↓ fold one way). The page change itself stays: Workflowy's zoom is also a URL change with breadcrumbs. The one remaining difference is that the caret does not survive the zoom; nobody has asked for that yet.
 
-### E. Only some pages are the outline.
+**E4. Done is hidden by default, and had no key.** Friction.
+Completing a row can vanish it under the caret. Workflowy keeps completed items until you hide them.
+*State: key fixed, [#485](https://github.com/juspay/olai/pull/485)* (Ctrl/⌘+O flips the page's done-hidden). "Stay visible for the row you just completed" is *Phase 3, item 2*, and can ship on its own.
 
-**E1. Agenda is not editable. PAIN.**
-`/agenda` drew `order the new cabinets`, 3 weeks late. Clicking the title opened no editor. You can see the work; you cannot tick it, retitle it, or Tab it. Workflowy: a saved search is still the bullets.
+### F. The chord table
 
-**E2. A day page is not editable. PAIN.**
-`/d/2026-08-10` lists the same node, plus a daily-note bullet. Click opened no editor. `+ day note` mints a `.md`. The dated outline rows are scenery.
-
-**E3. Zoom is a different page. FRICTION.**
-Glyph click on kitchen → `/#kitchen`. Glyph click on garden → `/#garden`. Breadcrumbs, new chrome, the rest of the file gone. Workflowy zoom is the same document; Alt/Cmd+. / , and sibling-page keys stay in it. Olai has no zoom keys (Alt+. / Alt+→ / Cmd+, did nothing) and no collapse keys (Ctrl+Space, Ctrl+↑/↓ unbound).
-
-**E4. Done is hidden by default. FRICTION.**
-`take out the old counters` is gone. Parent still says 1/2. The page has Visible/Hidden, not Ctrl+O. Completing a row can vanish it under the caret (hide-done-scope, shipped). Workflowy keeps completed items until you hide them.
-
-### F. Missing chords the hands already know.
-
-| Workflowy | Olai today |
-|---|---|
-| Ctrl/Cmd+Shift+Backspace deletes to Trash | unbound. ••• → Move to Trash, behind a confirm. Human 2026-08-11 still open. |
-| Alt/Cmd+. and , zoom | unbound. Click the glyph. |
-| Ctrl+Space, Ctrl+↑/↓ fold | unbound. Click the triangle. |
-| Escape = search | Escape = abandon draft |
-| Ctrl/Cmd+O show/hide completed | Visible/Hidden toggle on the page |
-| Ctrl/Cmd+B/I/U format | unbound |
-| Alt+Shift+↑/↓ move (Win/Linux); Cmd+Shift+↑/↓ (Mac) | Alt+Shift on every platform |
+| Workflowy | Olai, 2026-09-02 | Olai, 2026-09-03 |
+|---|---|---|
+| Ctrl/⌘+Shift+Backspace deletes to Trash | unbound; ••• → Move to Trash behind a confirm | unchanged. The human's 2026-08-11 delete ruling still stands; #485 kept the chord out deliberately. Open question 1. |
+| Alt/⌘+. and , zoom | unbound | bound, #485 |
+| Ctrl+Space, Ctrl/⌘+↑/↓ fold | unbound | bound, #485 |
+| Escape = search | Escape = drop the draft | unchanged (A5) |
+| Ctrl/⌘+O show/hide completed | a Visible/Hidden toggle on the page | bound, #485 |
+| Ctrl/⌘+B/I/U format | unbound | unbound; Phase 1 PR 3 |
+| Alt+Shift+↑/↓ move (Win/Linux); ⌘⇧↑/↓ (Mac) | Alt+Shift on every platform | ⌘⇧ added on a Mac, Alt+Shift kept everywhere, #485 |
 
 ### G. Phone
 
-Same click-to-input mode. Burger for the directory. No hover ••• (long-press, undocumented on screen). Titles ellipsize harder. Workflowy's mobile is a native app with Quick Add; olai's PWA is the desktop editor at 390px.
+Same click-to-input mode. Burger for the directory. No hover •••; long-press is undocumented on screen. Titles ellipsize harder. Workflowy's mobile is a native app with Quick Add; olai's PWA is the desktop editor at 390px. Nothing here is in a phase yet.
 
-## Root constraint, said once
+## The plan: three phases
 
-The format will not hold an empty title. The wire will not echo a write. The title editor will not be `contenteditable` because a title is one verbatim string and a live frame would fight the caret.
+Phase 1 makes the current editor stop lying. Phase 2 lets the caret walk the tree. Phase 3 brings the query pages along. Phase 1 finishes first; Phases 2 and 3 are independent of each other after the 2026-09-03 recut, and each is small PRs, not a monolith.
 
-All three are still right for *git* and *agents*. They are the wrong stack for *hands*. The proposal below keeps the first two (empty-on-disk stays illegal; the file stays the truth) and replaces the third.
+### Phase 1: make the input honest (Layer A)
 
-## Proposal
+Stay on `<input>`. Stop throwing information away. Eight steps were proposed; six were built or are being built, two were struck by the human.
 
-Three layers. A is a week. B is the actual product. C is the rest of the app catching up. Do not start C before B; do not skip A.
+| Step | What | Problem | State |
+|---|---|---|---|
+| 1 | Caret-at-click: measure the click's offset into the rendered title and open the input there | A2 | **shipped**, PR 1 |
+| 2 | Letters are not a mode: a bare keystroke opens the last-focused or first visible row | A1 | **rejected** by the human, 2026-09-03: "it is silly" |
+| 3 | Enter at column 0 inserts a draft above | B2 | **shipped**, PR 2 |
+| 4 | Several local drafts on screen at once | B1, B5 | **shipped**, PR 2 |
+| 5 | Paste parser: a clipboard with newlines or leading tabs becomes one atomic write with `children`, never a flattened line | C1 | **open**, PR 3 |
+| 6 | Format keys: Ctrl/⌘+B and I wrap the selection in `**` and `*`, and unwrap it when it is already wrapped. No U: the title pipeline drops raw HTML and its sanitiser has no `u`, and markdown has no underline | C2 | **open**, PR 3 |
+| 7 | Bind the missing navigation keys: zoom, fold, Ctrl/⌘+O, ⌘⇧ move on a Mac | E3, E4, F | **shipped**, PR 4 |
+| 8 | Wrap titles while editing | C3 | **withdrawn as false** by the human, 2026-09-03; the edit face never truncates |
 
-### Layer A — make the input honest
+**PR cut**
 
-Stay on `<input>`. Stop throwing information away.
+| PR | Steps | Gate | State |
+|---|---|---|---|
+| 1 | 1 | Playwright: click at 8px, caret is 0 or 1, not `length` | **merged** 2026-09-02, [#475](https://github.com/juspay/olai/pull/475), the human's own |
+| 2 | 3 + 4 | Enter Enter Enter yields three ghosts; Enter at 0 does not teleport to the subtree floor | **merged** 2026-09-02, [#477](https://github.com/juspay/olai/pull/477), grok authored, claude-opus reviewed, approved by the human |
+| 3 | 5 + 6 | The four-line beer/party paste becomes three nested rows in one write, and a refused paste lands nothing; Ctrl+B wraps `**` and unwraps it again | **open**. Not filed on the roadmap, not dispatched. The last of Phase 1. |
 
-**Where it stands, 2026-09-03.** A1 shipped as [#475](https://github.com/juspay/olai/pull/475); A3 and A4 as [#477](https://github.com/juspay/olai/pull/477); A7 as [#485](https://github.com/juspay/olai/pull/485). A2 is REJECTED and A8 is WITHDRAWN AS FALSE, both by the human 2026-09-03. What is left of Layer A is A5 and A6, which are one PR.
+**What PR 3 has to decide before it is written.** The ops layer's `add_node` already takes a nested `children` tree, three deep, as one validated atomic write (`packages/format/src/writing.ts`, `AddRequest`). The browser's edit wire does not: `packages/surface/src/edit.ts`'s `add` arm is `{ at, title }`, one row per `edit.apply`, and the surface header narrows the wire on purpose. A paste built on that wire would be N sequential writes, stopping at the first refusal with the rest half-landed, which is exactly what `children` exists to prevent. So PR 3 widens the wire: `add` gains an optional `children`, and the server's `addRequest` forwards it. Small in code; the argument that the wire may carry it belongs in the PR body.
 
-1. **Caret-at-click.** *SHIPPED, #475.* On `clickTitle`, measure the glyph offset into the rendered title (a hidden copy of the text, or `document.caretPositionFromPoint` on the span *before* unmounting it) and pass that index into `takeCaret`'s `at`. The comment that says "a click on a title means the end" is the bug. This one change removes the worst Workflowy break.
-2. ~~**Click focuses; letters are not a mode.**~~ **REJECTED by the human, 2026-09-03: "I reject A2, it is silly."** The proposal was that typing a character with the outline focused and no draft open would open the last-focused row (or the first visible row) at its end and insert there. It is not built and it is not to be built: guessing which row a bare keystroke meant is the silliness. Clicking, or arrowing in Layer B, is how a caret gets somewhere. Nothing else in Layer A depends on it.
-3. **Enter at column 0 inserts a draft *above*.** *SHIPPED, #477.* Still a draft, still writes nothing until it has a title. The current "add after the subtree" reading is what you want at *end* of line, not at *start*.
-4. **Several local drafts.** *SHIPPED, #477.* One caret, but abandoned empty siblings may remain on screen as drafts until the page closes — or, cheaper, Enter on an empty draft opens the *next* empty draft without collapsing the first. Disk still sees nothing. This is how Enter Enter Enter becomes a skeleton without weakening `a node needs a title`.
-5. **Paste parser.** *OPEN.* On paste into a title (or a new-row draft), if the clipboard has newlines or leading tabs, do not put it in the `<input>`. Parse a tab-indented outline and send one `add_node` with `children` (the op already takes a tree). Flattening to one line is the worst possible answer.
-6. **Format keys write markdown.** *OPEN.* Ctrl/Cmd+B/I/U wrap the selection in `**` / `*` / nothing-olai-renders-as-underline (skip U, or wrap `<u>` if the title renderer grows it). No toolbar required for A.
-7. **Bind the missing navigation keys.** *SHIPPED, #485.* Zoom in/out, fold, Ctrl+O for the page's done-hidden, platform-correct move-among-siblings on Mac (Cmd+Shift+↑/↓). Delete stays the human's; until that ruling, at least bind Ctrl/Cmd+Shift+Backspace to the same confirm the menu already asks.
-8. ~~**Wrap titles, or wrap while editing.**~~ **WITHDRAWN AS FALSE by the human, 2026-09-03: "A8 is false."** Its premise was "ellipsis on the edit face is uneditable text", and the code says otherwise: the editor's `<input>` carries only `ROW_TITLE` (`font-serif text-[1rem] leading-[1.5]`) with no truncation, and a single-line input scrolls horizontally under the caret, so the text at the caret is always visible however long the title. The ellipsis is the read face's alone, which is the quiet-outline ruling doing what it was chosen to do. Whether a read row should wrap stays Open Question 3 — a reading preference, not an editing defect. C3 above is corrected to match.
+The parser also has to say what it does with: two-space and four-space indents; `- ` and `* ` bullet prefixes (Workflowy's own export is `- ` with two-space indent); a multi-line paste into the middle of an existing title (first line joins the title at the caret, the rest become siblings below); and a single line, which stays an ordinary paste.
+| 4 | 7 | The chord table above, minus delete and bullet types; each chord an e2e seen red first | **merged** 2026-09-03, [#485](https://github.com/juspay/olai/pull/485), grok authored, claude-opus reviewed, overnight run |
 
-Layer A does not make olai feel like Workflowy. It makes the current editor stop lying about the click, the paste, and the blank line.
+Deferrals the shipped PRs left, all accepted by the human:
 
-### Layer B — the caret is the outline
+- **#477:** titling a middle blank of a before-skeleton is not order-pinned; titling the last (nearest) blank keeps order. Accepted with the PR's approval.
+- **#485:** no delete chord (the ruling above). Alt+Shift+Enter stays unclaimed. Ctrl+Space on a Mac shares a key with the OS input-source switch when that is on; the gutter triangle is the fallback. The last two were parked in the Inbox overnight and the PR merged on the morning's word.
 
-Replace "click a title, mount an input" with a continuous caret over the tree.
+Phase 1 closes when PR 3 lands. It does not make olai feel like Workflowy. It makes the current editor stop lying about the click, the paste and the blank line.
+
+### Phase 2: the caret walks the tree (Layer B)
+
+*Not started. Needs the human's word. Recut 2026-09-03; the original shape is in the assessment below.*
+
+**What is already true, and the plan need not build.** There is one live draft and one `<input>` at a time (the single draft signal in `editing.tsx`), so "one editing surface, not 500 inputs" is the editor as it stands. Bare Up/Down already close one input and open the next row's, unconditionally, with a round trip between. The caret-follow after a structural write (`settle` and `follow` in `editing.tsx`) waits on the published frame and puts the caret back. Phase 2 is an extension of that editor, not a replacement for it.
+
+**What to build, as four PRs in Phase 1's style**
+
+| PR | What | Problem | Gate |
+|---|---|---|---|
+| 5 | **Left at column 0 and Right at end of line cross rows.** Bare ArrowLeft/ArrowRight are unclaimed in `keys.ts`; two clauses there and two actions reusing `step()` with a caret offset (`opened()` already takes one). Up/Down keep the caret's column rather than landing at the end | A4 | Left at 0 lands at the end of the row above; Right at end lands at 0 of the row below; Down from column 5 lands at column 5 |
+| 6 | **A draft is a row.** A parked or live empty draft takes Tab, Shift+Tab and Alt+Shift+↑/↓ as local re-anchoring (its `before`/`after`/`under` anchor changes; nothing is written), and draws a bullet, not a hollow placeholder | B5 | Enter, Tab, type, Enter writes a child; the skeleton keeps its shape when titled |
+| 7 | **A click on a note preview places the caret at that offset**, using the measurement #475 built for titles. One click, not two. Shift+Enter stays | D1 | Click at 40% of a note's preview: the textarea opens with the caret there |
+| 8 | **Split does not teleport.** A placement question first: today `split_node` places the tail as the next *sibling*, which for an expanded parent is after its whole subtree. Workflowy's answer, per its own blog, depends on the fold: an *expanded* parent's tail becomes its *first child*; a *collapsed* parent's tail is the next sibling, after the subtree. If the human takes that placement, the teleport disappears with no optimistic UI, because an expanded parent's first child is the very next line on screen and a collapsed one's next sibling is too. If not, the fallback is scrolling the new row into view with the caret in it | B3 | Split a section title in the middle: the caret's new row is on screen, adjacent to the old one |
+
+**Kept from the original plan**
+
+- **The verbatim-string rule.** The field is one line of source. The improvement is lifetime and placement, not `contenteditable`.
+- **What not to build:** a `contenteditable` of the whole page (the 2026-08-09 argument holds); optimistic marks or titles on disk; last-write-wins; blank records on disk.
+
+**Dropped from the original plan, and why**
+
+- **"The first character typed into a row the caret is standing on opens the field."** That needs a state the editor does not have: a focused row with no input open. Every chord from #485 dispatches from the input's own key handler and reads the draft; the page walk returns nothing when no field is open; the only caret-less row identity is the selection layer, which is built to be mutually exclusive with the caret ("a caret or a pick, never both"). Manufacturing the state means a second window-level key listener contending with the selection's, and "one caret" stops being true by shape. And once PR 5 lands, arrowing into a row opens its input, so there is never a row under the caret without a field. The bullet asked for a structural change to reach a state PR 5 makes unreachable.
+- **"Dropped if still empty once the caret has been elsewhere and idle."** #477 shipped park-until-page-close, on purpose. A timer that eats a blank while you fetch coffee is worse than a blank that waits.
+- **A local draft of position for Tab.** Tab lands in ~110ms and the drive marked it fine. The only real teleport is split (B3), and PR 8 treats that as a placement question, which is cheaper and does not reopen the optimistic-position door the 2026-08 design closed.
+
+**The test.** A person who has used Workflowy for a decade sits down, clicks a row, types into it, hits Enter three times, Tab, pastes a shopping list, clicks a typo in the middle of a long bullet, arrows left off the start of a line, clicks into a note, and never sees a placeholder, a refusal, a source swap they did not ask for, or a caret at the wrong end. If any of those happen, Phase 2 is not done.
+
+### Phase 3: every surface is the outline (Layer C)
+
+*Not started. Recut 2026-09-03. Nothing here is gated on Phase 2 any more.*
+
+**The door the original plan named does not exist.** It said Phase 2's caret would be "about a node id, not a row index", and that this would let the same editor open on an agenda row. The editor is keyed on `Row.key`, a *place*: the chain of ids down the page, deliberately not a node id, so a node reached through two mirrors is two rows. `createEditor` takes the page's rows, its collapsed set and its frame counter; the walk, the follow and the step all move through the flattened tree; an `Anchor` places a new row beside a sibling in that tree. `Editable`, which mounts the editor, exists only on outline and zoomed-node pages, and `useEditor()` throws anywhere else. Day and agenda rows are query entries drawn by `DayNode`, which is `NodeLine` with `onEdit` left off. The missing prop is not the cost; the missing tree is.
 
 **What to build**
 
-- Every visible title is already a field. Not 500 `<input>`s: one editing surface whose *value* is the row the caret is in, drawn in place of that row's title, with neighbouring rows still the read face — *but the caret can walk into them without a click*. Up/Down, Left-at-0, Right-at-end move it. The first character you type in a rendered row opens the field *at that character*.
-- Keep the verbatim-string rule. The field is still one line of source. The improvement is lifetime and placement, not contenteditable HTML.
-- Notes: clicking the preview puts the caret in the note at that offset (source swap allowed; the extra click is not). Shift+Enter stays the keyboard door.
-- New rows are real rows in the tree widget *locally* (a draft slot with a bullet, indent, Tab, arrows), committed when they have a title, dropped if still empty when the caret has been elsewhere and idle. The ghost placeholder goes away.
-- Split/indent still wait on the file. The caret-follow primitive that `editing.tsx` already owns is the whole of the wait; the row must not *look* like it hasn't moved. A 100ms local indent, confirmed by the file, is not optimistic UI of the kind the design forbade — the forbidden thing was two tabs disagreeing about what landed. A caret sliding under the parent, then snapping if the write is refused, is a draft of *position*, which we already do for *text*.
+1. **Agenda and day rows take the two verbs a hand reaches for there: complete and retitle.** Not the tree editor. A place-less single-field editor on `DayNode`: click the title, get the `<input>` at the clicked offset, Enter commits `set_title`, Escape drops, Ctrl/⌘+Enter completes, nothing else is bound (no Enter-adds, no Tab, no Up/Down). The ops are the same ones the tree sends and the query redraws around the row; if the row leaves the query (completed with hide-done on) the field closes. This satisfies E1 and E2's ask ("tick it, retitle it") without a caret in a query, and needs nothing from Phase 2. The day page's daily-note bullet is unchanged.
+2. **Done stays visible for the row you just completed** until you leave the page, with Ctrl/⌘+O as the global. The landing-reveals-done PR already does "revealed, for the visit" for a row you landed on; this is the same reveal for a row you just finished. Independent of everything else here.
+3. **Tab, Enter-adds and arrows on an agenda row** stay out until someone shows a use for them. Workflowy allows them on a search result; nobody in the drive missed them.
 
-**Note on the third bullet, 2026-09-03.** "The first character you type in a rendered row opens the field at that character" is NOT A2 coming back. A2 was about a keystroke with no row under the caret, which the human rejected; this is a keystroke on a row the caret is already walking, where the target is unambiguous. If Layer B is ever built, that distinction is the one to hold.
+**Dropped:** *zoom as focus*. The original plan wanted #485's zoom keys to scroll and collapse in place rather than navigate to `/#id`. Workflowy's zoom also changes the URL and draws breadcrumbs; what it keeps that olai does not is the caret, which #485 documents as "the caret stays behind". Re-deciding zoom a day after shipping it is churn. If anyone wants the caret to survive a zoom, that is a PR the size of Phase 2's PR 5.
 
-**What not to build**
+## Assessment of the plan, 2026-09-03
 
-- A contenteditable of the whole page. Paste-as-HTML, caret vs live frames, innerHTML → title string: the 2026-08-09 argument still holds.
-- Optimistic marks, optimistic titles on disk, last-write-wins.
-- Blank records on disk. Local blank drafts only.
+The plan was written by Grok from the browser drive. The diagnosis is right and Phase 1 was well cut: four small PRs, each putting a key or a click onto behaviour that already existed, each with an e2e gate seen red first, three shipped in two days. The rest was checked against the client code on 2026-09-03 and did not all hold:
 
-**The test**
+- **The paste parser's atomicity was assumed, not available.** `add_node` takes `children`; the browser's edit wire does not. Written as proposed, the paste would have been N writes with a half-landed failure mode. PR 3 now says the wire widens, and lists the clipboard shapes the parser has to answer.
+- **Phase 2 described the existing editor as if it were new.** One surface, one live input, Up/Down walking rows: all shipped. The novel parts were four small things (edge-crossing arrows, real-bullet drafts, note click, split placement) and one structural thing (a focused row with no input) that the arrows make unnecessary. The monolith was gated on "the human's word" as one product change; the recut is four PRs that each ship alone.
+- **Phase 2 contradicted #477** (drafts dropped on an idle timer versus drafts parked until the page closes) and proposed optimistic position for a Tab the drive itself called fine.
+- **Phase 3's justification was false.** The editor is not keyed on node ids, and Phase 2 as recut does not change that. The recut says what is structural (a tree-keyed editor on a query page) and offers the two verbs that matter as a small place-less editor instead, ungated.
+- **Zoom-as-focus misread Workflowy**, whose zoom is also a URL change with breadcrumbs.
+- **Underline was never possible.** The title pipeline drops raw HTML and its sanitiser allowlist has no `u`; step 6 no longer hedges on it.
+- **Escape (A5) and the phone (G) are still unplanned.** Both are marked open rather than hidden.
 
-A person who has used Workflowy for a decade sits down, types into the row they clicked, hits Enter three times, Tab, pastes a shopping list, clicks a typo in the middle of a long bullet, and never sees a placeholder, a refusal, a source-swap they didn't ask for, or a caret at the wrong end. If any of those happen, B is not done. (The original wording began "does not click" — that was A2's test, and A2 is rejected.)
+Two things the recut could not settle are questions 5 and 6 below: the wire widening and the split placement.
 
-### Layer C — every surface is the outline
+## Rulings log
 
-Only after B:
-
-- **Agenda and day pages edit the node they draw.** The 2026-08 ruling that a day is a query, not a tree, is why the keyboard loop was banned there (a caret in a query would re-place onto whoever matched next). B's caret is about a *node id*, not a row index in a tree. That is the door: open the same field on an agenda row, send the same ops, let the query redraw around it. If the row leaves the query (you completed it, hide-done is on), the caret follows to the node's home or closes — it does not jump onto a neighbour it was never in.
-- **Zoom keys** over B's caret (already in A as bindings; in C they should not be a navigation to `/#id` unless the user wants a page). Prefer zoom-as-focus (scroll + collapse the world above) and keep `/#id` for the address bar / pins.
-- **Done-hidden** defaults to Workflowy's "stay visible" for the row you just completed, or Ctrl+O as the global. Vanishing the row under the caret is a feel bug even if it is the preference's right answer for *reading*.
-
-## Suggested PR cut
-
-The Layer column numbers the **Layer A proposals** above (A1–A8), not the problem headings under "A. There is a mode".
-
-| PR | Layer | What lands | Gate | State |
-|---|---|---|---|---|
-| 1 | A1 | caret-at-click | Playwright: click at 8px, caret is 0 or 1, not `length`. | **shipped** [#475](https://github.com/juspay/olai/pull/475) |
-| 2 | A3+A4 | Enter at column 0 inserts a draft above; multiple empty drafts on screen | Enter Enter Enter yields three ghosts. Enter at 0 does not teleport to the subtree floor. | **shipped** [#477](https://github.com/juspay/olai/pull/477) |
-| 3 | A5+A6 | newline/tab clipboard → `add_node` tree; Ctrl+B wraps `**` | The beer/party paste becomes three nested rows. | **open — all that is left of Layer A** |
-| 4 | A7 | zoom, fold, Ctrl+O, Mac move chord, delete-or-confirm | The Workflowy chord table, minus bullet-types. | **shipped** [#485](https://github.com/juspay/olai/pull/485) |
-| 5 | B | continuous caret, local blank slots, note-click-is-caret | The test in Layer B. | not started, needs the human's word |
-| 6 | C | agenda/day edit by node id | Click `order the new cabinets` on `/agenda`, type, it writes. | not started, gated on 5 |
-
-PR 1 shipped without its A2 half, which the human rejected on 2026-09-03; A8 was in no PR of this cut and is withdrawn as false. So Layer A closes when PR 3 lands.
+| Date | Ruling |
+|---|---|
+| 2026-08-11 | No delete key. Still standing; see open question 1. |
+| 2026-09-02 | PR 1 (#475) shipped by the human. PR 2 (#477) dispatched to grok, approved "PR 477 is approved" at 16:41 ET and merged. PR 4 chosen for the overnight run. |
+| 2026-09-03 | Step 2 rejected: "I reject A2, it is silly." Step 8 withdrawn: "A8 is false." #485 merged on the morning's word with its two Inbox deferrals accepted. |
 
 ## Open questions for the human
 
-These were already open; driving the browser did not close them:
-
-1. **Delete key.** 2026-08-11 deferred. The menu already puts a subtree in Trash behind a confirm. Binding Ctrl/Cmd+Shift+Backspace to that confirm is the Workflowy chord without inventing a shredder. A bulk chord is still the dangerous one.
-2. **Empty titles on disk.** Layer A/B keep the format. If that ever changes, sketching gets simpler and git gets noisier. I would not change it.
-3. **Title wrap vs the quiet outline.** Narrowed 2026-09-03 by the A8 correction: this is a READING question only, since the edit face never truncates. Does a long row wrap when you are looking at it, or keep the ellipsis the quiet-outline ruling chose?
-4. **Should agenda/day be editors.** Layer C argues yes, by node id. The original ban was about a caret in a *query*. If that ban is load-bearing for another reason, C becomes "click through to the home outline" and the feel stays split.
+1. **Delete key.** Deferred 2026-08-11. The ••• menu already puts a subtree in Trash behind a confirm. Binding Ctrl/⌘+Shift+Backspace to that same confirm is the Workflowy chord without inventing a shredder. A bulk chord is the dangerous one. #485 left it out on this ruling.
+2. **Empty titles on disk.** Phases 1 and 2 keep the format. If that ever changes, sketching gets simpler and git gets noisier. Recommendation: do not change it.
+3. **Title wrap on the read face.** A reading question only, since the edit face never truncates (C3). Does a long row wrap when you are looking at it, or keep the ellipsis the quiet-outline ruling chose?
+4. **Should agenda and day pages take complete and retitle.** Phase 3 item 1 argues yes, through a place-less single-field editor that binds nothing structural. The original ban was about a caret in a *query* walking onto a neighbour; a field that cannot walk does not trip it. If the ban is load-bearing for another reason, Phase 3 becomes "click through to the home outline" and the feel stays split.
+5. **May the browser's edit wire widen for paste?** PR 3 needs `add` to carry `children` so a pasted tree is one atomic write. `packages/surface/src/edit.ts` narrows the wire on purpose; the paste is the first hand-driven write that needs the wider one.
+6. **Where does the tail of a split parent go?** Today: next sibling, after the whole subtree, which is the teleport in B3. Workflowy: first child when the parent is expanded, next sibling when it is collapsed, so the new line is always the next line on screen. Taking Workflowy's placement closes B3 with no UI work. `split_node`'s contract ("placed immediately after it") would gain the expanded case, and the browser would have to send the fold state or choose the placement itself.
+7. **Phases 2 and 3.** Neither is dispatched until the human says so. Each is cut so that any single PR can go alone.
 
 ## What this is not
 
-A request to become Workflowy. Olai is files, git, agents, marks with instants, mirrors that are placements, an agenda that is owed work. Those are the product. The ask is that the *hands* that already know an outliner are not fighting a viewer.
+A request to become Workflowy. Olai is files, git, agents, marks with instants, mirrors that are placements, an agenda that is owed work. Those are the product. The ask is that hands that already know an outliner are not fighting a viewer.
