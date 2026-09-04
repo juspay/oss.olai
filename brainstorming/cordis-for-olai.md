@@ -446,9 +446,9 @@ Answers from [juspay/olai#472](https://github.com/juspay/olai/pull/472), each ba
 | Fibers with LOADING / ACTIVE / PENDING / FAILED and reactive activation on `inject` | Every row and every dynamic plugin is a fiber; `needs` is `inject`; the panel draws the states | **Used** |
 | Revertible effects (every registration undone on dispose) | Every registration is an `acquireRelease` on the fiber's Effect scope; the bridge owns the scope | **Used, adapted** (Effect scopes carry what `ctx.effect` would) |
 | Declarative loader with rows, `disabled`, `config`, patches | `olai.yml` rows, `--plugins` and `--commit`/`--push` as patches, `Config` schemas | **Used** |
-| Services provided by a plugin for others | Five core-owned keys through `Offers`; provider identity is the root until phase 12a | **Used, limited**; plugin-owned keys are phase 12b |
+| Services provided by a plugin for others | Five core-owned keys through `Offers`, provided on the offering fiber since phase 12a | **Used, limited**; plugin-owned keys are phase 12b |
 | Confluence and failure containment (the paper's theorems) | Claimed for registrations under the paper's conditions; evidenced by the flip and restart tests | **Claimed, scoped** (§2, §4.1, §7) |
-| Cancellation of a loading fiber; host shutdown | None in the pinned runtime for a running `apply`; none in the bridge | **Deferred to phase 12a** |
+| Cancellation of a loading fiber; host shutdown | The bridge keeps the initialisation as an interruptible Effect fiber and reaches it from stop, flip, host close and dependency withdrawal; `closeHost` drains every fiber (phase 12a, merged) | **Used, adapted** (bridge-owned, with one named coupling to the pin) |
 | Interception (`ctx.intercept`, consulted at use, changed without reload) | A per-session ticket checked in the write gate: policy at invocation, per session, not on a context | **Adapted**; context interception omitted |
 | Isolation realms (`ctx.isolate`) | None; two engines are two rows, not two realms | **Omitted** |
 | Child contexts and `ctx.extend` | Effect scopes per node agent and per session | **Adapted** |
