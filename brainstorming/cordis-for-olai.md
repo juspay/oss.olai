@@ -330,7 +330,7 @@ Each phase is one PR, green alone.
 | --- | --- | --- | --- | --- | --- | --- |
 | 13 | Search (`@olai/index`, `search.nodes`, the tab's `search/`) | 533 + 1,600 | 2 | `Search` door in core, the matcher as its provider row | phase 10's ruling (`search.nodes` is on the agent face) | 11, 13 |
 | 14 | Identity (`@olai/identity`, `who`, the tab's `who/`) | 429 + 314 | 2 | `Identity` door, tailscale as one provider row | nothing | 11, 12 |
-| 15 | Machine-local state (`@olai/state`, `Held`) | ~500 | 1, 4 | one `Held` door every row and every core part keeps its record on; chat's three records move onto it (phase 7's debt) | nothing | 12, 13 |
+| 15 | Machine-local state (`@olai/state`, `Held`) | ~500 | 1, 4 | one `LocalState` door (renamed from `Held`) every row keeps its record on, one file per plugin; chat's three records merge onto it (phase 7's debt) | nothing | #502, 12, 13, 14 |
 | 16 | Transports and profiles (`listener.ts`, `mcp/`, the faces) | 228 + 1,142 | 2, 3 | `ws` and `mcp` as transport rows; `olai web` and `olai surface` as two row lists over one base bundle | 14 | none (touches `serve.ts` whole) |
 | 17 | The vault as a row (`store` mounted from a row; `Vault` already exists) | part of `store` | 1 | the test-minimal profile: vault plus kinds and nothing else | 15 | none |
 | 18 | The shell's own faces (outline view, preferences, the core dressings for `date`, `path`, `doc`, `ref`) | most of `web` | 3, 4 | client plugins registering into the same slots the tenants use | 9's three slots, 15 | none |
