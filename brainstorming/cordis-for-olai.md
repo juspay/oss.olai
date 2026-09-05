@@ -256,18 +256,18 @@ Each phase is one PR, green alone.
   - ✅ [12. Dynamic plugins](#phase-12-dynamic-plugins) — merged (#506)
   - ✅ [12a. The bridge owns provision, teardown order and cancellation](#phase-12a-the-bridge-owns-provision-teardown-order-and-cancellation) — merged (#507)
   - ✅ [12b. Plugin-owned service keys](#phase-12b-plugin-owned-service-keys) — merged (#523)
-  - ⬜ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — open
-  - ⬜ [12d. Journal offers its readings, and an agent writes the daily brief](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-daily-brief) — open
+  - ⬜ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — open. **Blocked on:** nothing. **Not beside:** 17 (both rewrite the composition root) or 18 (both move the identity kit in `@olai/web`).
+  - ⬜ [12d. Journal offers its readings, and an agent writes the daily brief](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-daily-brief) — open. **Blocked on:** nothing for the first PR (journal offers `journal.agenda`); the second (the brief) on the first. **Beside:** anything.
 - **The promotion track** — the root becomes rows
   - ✅ [13. Search is a plugin](#phase-13-search-is-a-plugin) — merged (#516)
   - ✅ [14. Identity is a plugin](#phase-14-identity-is-a-plugin) — merged (#512)
     - ✅ [14a. The upgrade's header allowlist follows the live row](#phase-14a) — done (kolu#2229, #528)
   - ✅ [15. Machine-local state is one door, and it is called `LocalState`](#phase-15-machine-local-state-is-one-door-and-it-is-called-localstate) — merged (#505)
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
-  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — open
-  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open
+  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — open. **Blocked on:** 12c merging (the composition root). **Beside:** 12d.
+  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** 12c merging (the identity kit lands in `@olai/web` first). **Beside:** 12d, 17. Largest; last by size.
 
-**Next**, as of 2026-09-05: 12c and 12d together; 17 after 12c, since both touch the composition root; 18 last.
+**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05 that is 12c and 12d; then 17 and 18 once 12c is in.
 
 ### The phases
 
