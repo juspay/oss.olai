@@ -257,7 +257,8 @@ Each phase is one PR, green alone.
   - ✅ [12a. The bridge owns provision, teardown order and cancellation](#phase-12a-the-bridge-owns-provision-teardown-order-and-cancellation) — merged (#507)
   - ✅ [12b. Plugin-owned service keys](#phase-12b-plugin-owned-service-keys) — merged (#523)
   - ⬜ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — merged (#531)
-  - ⬜ [12d. Journal offers its readings, and an agent writes the morning agenda](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-morning-agenda) — merged (#532)
+  - ✅ [12d. Journal offers its readings, and an agent writes the morning agenda](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-morning-agenda) — merged (#532)
+  - ⬜ [12e. Plugin-owned service keys in the browser](#phase-12e-plugin-owned-service-keys-in-the-browser) — open. **Blocked on:** nothing. **Beside:** 17.
 - **The promotion track** — the root becomes rows
   - ✅ [13. Search is a plugin](#phase-13-search-is-a-plugin) — merged (#516)
   - ✅ [14. Identity is a plugin](#phase-14-identity-is-a-plugin) — merged (#512)
