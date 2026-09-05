@@ -267,7 +267,7 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
   - ✅ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — merged (#536)
   - ✅ [17. The vault is a row](#phase-17-the-vault-is-a-row) — merged (#534)
-  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** nothing (16a is merged). **Beside:** 20. Largest.
+  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — dispatched 2026-09-05, no PR yet. **Blocked on:** nothing. **Beside:** 20. Largest.
   - ✅ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — merged (#535)
   - ⬜ [20. The website says what a plugin is](#phase-20-the-website-says-what-a-plugin-is) — open. **Blocked on:** nothing (best after 18 and 16a so it describes the final shape). **Beside:** anything.
 
