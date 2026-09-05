@@ -265,13 +265,13 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
     - ✅ [14a. The upgrade's header allowlist follows the live row](#phase-14a) — done (kolu#2229, #528)
   - ✅ [15. Machine-local state is one door, and it is called `LocalState`](#phase-15-machine-local-state-is-one-door-and-it-is-called-localstate) — merged (#505)
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
-  - ⬜ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — in review ([#536](https://github.com/juspay/olai/pull/536)): the move and the profiles-as-patches are right; ruled 2026-09-05 that the transports are in the exact set with no row-level exemption; the API spelling three plugin names, the prose and the stubs are owed. **Blocked on:** nothing. **Beside:** 18, 19, 20.
-  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — merged (#534) **Blocked on:** nothing. **Beside:** 18.
-  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** nothing. **Beside:** 17, 16a. Largest.
-  - ⬜ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — merged (#535)
-  - ⬜ [20. The website says what a plugin is](#phase-20-the-website-says-what-a-plugin-is) — open. **Blocked on:** nothing (best after 18 and 19 so it describes the final shape). **Beside:** anything.
+  - ⬜ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — in review ([#536](https://github.com/juspay/olai/pull/536)): packages moved and profiles are patches; owed: no `--plugins` exemption (ruled), the listener as a door each transport registers its route or upgrade into, no plugin names in core, prose, no stub browser halves. **Blocked on:** nothing. **Beside:** 18, 20.
+  - ✅ [17. The vault is a row](#phase-17-the-vault-is-a-row) — merged (#534)
+  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — dispatched, no PR yet. **Blocked on:** nothing. **Beside:** 16a, 20. Largest.
+  - ✅ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — merged (#535)
+  - ⬜ [20. The website says what a plugin is](#phase-20-the-website-says-what-a-plugin-is) — open. **Blocked on:** nothing (best after 18 and 16a so it describes the final shape). **Beside:** anything.
 
-**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05 that is 16a and 18, and 20 last so it describes the final shape.
+**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05: 16a is in review, 18 is dispatched, 20 is last so it describes the final shape.
 
 ### The phases
 
