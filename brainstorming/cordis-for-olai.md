@@ -268,7 +268,7 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
   - ⬜ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — open. **Blocked on:** 17 merging (both touch `profiles.ts` and `serve.ts`). **Beside:** 18.
   - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — in review ([#534](https://github.com/juspay/olai/pull/534)): rulings landed, good to merge once the vault moves to `packages/plugins/vault/` with a line in `olai.yml`. **Blocked on:** nothing. **Beside:** 18.
   - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** nothing. **Beside:** 17, 16a. Largest.
-  - ⬜ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19--extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — open. **Blocked on:** nothing. **Beside:** 18, 16a, 17.
+  - ⬜ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — open. **Blocked on:** nothing. **Beside:** 18, 16a, 17.
 
 **Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05 that is 18 and 19 now, and 16a once 17 merges.
 
