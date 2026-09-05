@@ -266,7 +266,7 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
   - ✅ [15. Machine-local state is one door, and it is called `LocalState`](#phase-15-machine-local-state-is-one-door-and-it-is-called-localstate) — merged (#505)
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
   - ⬜ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — open. **Blocked on:** 17 merging (both touch `profiles.ts` and `serve.ts`). **Beside:** 18.
-  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — in review ([#534](https://github.com/juspay/olai/pull/534)): rulings landed, good to merge once the vault moves to `packages/plugins/vault/` with a line in `olai.yml`. **Blocked on:** nothing. **Beside:** 18.
+  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — in review ([#534](https://github.com/juspay/olai/pull/534)): the vault is `packages/plugins/vault/` and a line in `olai.yml`; one ruling for the human, whether `--plugins` now has to name `vault`. **Blocked on:** nothing. **Beside:** 18.
   - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** nothing. **Beside:** 17, 16a. Largest.
   - ⬜ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — open. **Blocked on:** nothing. **Beside:** 18, 16a, 17.
   - ⬜ [20. The website says what a plugin is](#phase-20-the-website-says-what-a-plugin-is) — open. **Blocked on:** nothing (best after 18 and 19 so it describes the final shape). **Beside:** anything.
