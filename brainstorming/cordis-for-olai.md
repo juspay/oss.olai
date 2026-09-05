@@ -258,7 +258,7 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
   - ✅ [12b. Plugin-owned service keys](#phase-12b-plugin-owned-service-keys) — merged (#523)
   - ✅ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — merged (#531)
   - ✅ [12d. Journal offers its readings, and an agent writes the morning agenda](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-morning-agenda) — merged (#532)
-  - ⬜ [12e. Plugin-owned service keys in the browser](#phase-12e-plugin-owned-service-keys-in-the-browser) — open. **Blocked on:** nothing. **Beside:** 17.
+  - ⬜ [12e. Plugin-owned service keys in the browser](#phase-12e-plugin-owned-service-keys-in-the-browser) — in review ([#533](https://github.com/juspay/olai/pull/533), three items: the viewer kit move, a waiting browser half shown on the panel, browser keys on `plugins.inspect`). **Blocked on:** nothing. **Beside:** 17.
 - **The promotion track** — the root becomes rows
   - ✅ [13. Search is a plugin](#phase-13-search-is-a-plugin) — merged (#516)
   - ✅ [14. Identity is a plugin](#phase-14-identity-is-a-plugin) — merged (#512)
