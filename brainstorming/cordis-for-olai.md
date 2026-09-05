@@ -267,11 +267,11 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
   - ⬜ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — review addressed ([#536](https://github.com/juspay/olai/pull/536)): each transport owns its route or upgrade, core names none, no exemption; one item left, the argument in four files. **Blocked on:** nothing. **Beside:** 18, 20.
   - ✅ [17. The vault is a row](#phase-17-the-vault-is-a-row) — merged (#534)
-  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — dispatched, no PR yet. **Blocked on:** nothing. **Beside:** 16a, 20. Largest.
+  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** 16a merging (the human's choice, 2026-09-05: one lane at a time). **Beside:** 20. Largest.
   - ✅ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — merged (#535)
   - ⬜ [20. The website says what a plugin is](#phase-20-the-website-says-what-a-plugin-is) — open. **Blocked on:** nothing (best after 18 and 16a so it describes the final shape). **Beside:** anything.
 
-**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05: 16a is in review, 18 is dispatched, 20 is last so it describes the final shape.
+**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05: 16a is in review and merges first; 18 starts after it; 20 is last so it describes the final shape.
 
 ### The phases
 
