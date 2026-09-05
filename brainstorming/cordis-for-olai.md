@@ -257,7 +257,7 @@ Each phase is one PR, green alone.
   - ✅ [12a. The bridge owns provision, teardown order and cancellation](#phase-12a-the-bridge-owns-provision-teardown-order-and-cancellation) — merged (#507)
   - ✅ [12b. Plugin-owned service keys](#phase-12b-plugin-owned-service-keys) — merged (#523)
   - ⬜ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — open. **Blocked on:** nothing. **Not beside:** 17 (both rewrite the composition root) or 18 (both move the identity kit in `@olai/web`).
-  - ⬜ [12d. Journal offers its readings, and an agent writes the daily brief](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-daily-brief) — open. **Blocked on:** nothing for the first PR (journal offers `journal.agenda`); the second (the brief) on the first. **Beside:** anything.
+  - ⬜ [12d. Journal offers its readings, and an agent writes the daily brief](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-daily-brief) — open. **Blocked on:** nothing. **Beside:** anything.
 - **The promotion track** — the root becomes rows
   - ✅ [13. Search is a plugin](#phase-13-search-is-a-plugin) — merged (#516)
   - ✅ [14. Identity is a plugin](#phase-14-identity-is-a-plugin) — merged (#512)
@@ -418,7 +418,7 @@ Each phase is one PR, green alone.
 
 ### Phase 12d. Journal offers its readings, and an agent writes the daily brief
 
-(two PRs; 12b is merged, so the first is open; the second is the worked example `docs/dynamic-plugins.md` deserves). *Added 2026-09-05; the human chose it from three candidates.* The journal plugin already computes what is dated today and what is owed (`packages/plugins/journal/src/readings.ts`), but only the day and agenda pages can reach it.
+(one PR; 12b is merged, so this is open: journal offers the door and the brief is written against it in the same lane, as the worked example `docs/dynamic-plugins.md` deserves and as the scenario that proves the door). *Added 2026-09-05; the human chose it from three candidates.* The journal plugin already computes what is dated today and what is owed (`packages/plugins/journal/src/readings.ts`), but only the day and agenda pages can reach it.
 - **Journal offers `journal.agenda`** with `Offers.own`: given a date and the reading it is about, the dated and the owed nodes as located rows, the same shape the agenda page draws. The reading comes in, as with `Search`, so the answer is about one snapshot.
 - **The daily brief is a vault-defined plugin.** A node agent writes it into its own subtree: `needs: [Clock, Deliveries, serviceTag("journal.agenda")]`, and each morning at an hour the node's property names it reads the agenda and delivers a short brief into that node's conversation through `Deliveries`, the way kolu's doorbell delivers a ring. The person approves it once on the panel. It is written as the worked example in `docs/dynamic-plugins.md`, replacing the swatch as the example that does something, and `plugins.inspect` is how the agent found the key.
 - **Done means**: `journal.agenda` is on `plugins.inspect` while journal runs and off it when journal is switched off; the brief's row reads `waiting` with the key named while journal is off and `running` when it returns; a scenario approves the brief and reads one delivery in the node's conversation; the doc's example compiles through `buildHalf` in a test, the way the swatch does.
