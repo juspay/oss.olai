@@ -256,7 +256,7 @@ Each phase is one PR, green alone.
   - ✅ [12. Dynamic plugins](#phase-12-dynamic-plugins) — merged (#506)
   - ✅ [12a. The bridge owns provision, teardown order and cancellation](#phase-12a-the-bridge-owns-provision-teardown-order-and-cancellation) — merged (#507)
   - ✅ [12b. Plugin-owned service keys](#phase-12b-plugin-owned-service-keys) — merged (#523)
-  - ⬜ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — in review ([#531](https://github.com/juspay/olai/pull/531), one item). **Blocked on:** nothing. **Not beside:** 17 (both rewrite the composition root) or 18 (both move the identity kit in `@olai/web`).
+  - ⬜ [12c. Every cross-plugin edge is a door](#phase-12c-every-cross-plugin-edge-is-a-door) — merged (#531)
   - ⬜ [12d. Journal offers its readings, and an agent writes the morning agenda](#phase-12d-journal-offers-its-readings-and-an-agent-writes-the-morning-agenda) — in review ([#532](https://github.com/juspay/olai/pull/532), good to merge). **Blocked on:** nothing. **Beside:** anything.
 - **The promotion track** — the root becomes rows
   - ✅ [13. Search is a plugin](#phase-13-search-is-a-plugin) — merged (#516)
@@ -264,10 +264,10 @@ Each phase is one PR, green alone.
     - ✅ [14a. The upgrade's header allowlist follows the live row](#phase-14a) — done (kolu#2229, #528)
   - ✅ [15. Machine-local state is one door, and it is called `LocalState`](#phase-15-machine-local-state-is-one-door-and-it-is-called-localstate) — merged (#505)
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
-  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — open. **Blocked on:** 12c merging (the composition root). **Beside:** 12d.
-  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** 12c merging (the identity kit lands in `@olai/web` first). **Beside:** 12d, 17. Largest; last by size.
+  - ⬜ [17. The vault is a row](#phase-17-the-vault-is-a-row) — open. **Blocked on:** nothing. **Beside:** 12d, 18.
+  - ⬜ [18. The shell's own faces are client plugins](#phase-18-the-shells-own-faces-are-client-plugins) — open. **Blocked on:** nothing. **Beside:** 12d, 17. Largest.
 
-**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05 that is 12c and 12d; then 17 and 18 once 12c is in.
+**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-05 that is 17 and 18, with 12d waiting only on the merge button.
 
 ### The phases
 
@@ -407,7 +407,7 @@ Each phase is one PR, green alone.
 
 ### Phase 12c. Every cross-plugin edge is a door
 
-(one PR; 12b and 16 are merged, so this is open). *In review: [#531](https://github.com/juspay/olai/pull/531), reviewed 2026-09-05; every edge closed as asked, `chat.seating` is the first shipped tenant of `own`, the fence is an equality with a mutation script; blocking: the argued prose deleted from `config.ts`, `binding.ts` and the new door.* *Added 2026-09-05 on the human's word, after a survey of master for dependencies that go around Cordis rather than through it.* The survey found four, and one that is fine.
+(one PR; 12b and 16 are merged, so this is open). *[#531](https://github.com/juspay/olai/pull/531), merged 2026-09-05 as `8401ffe5`, with the argued prose restored first: every edge closed as asked, `chat.seating` is the first shipped tenant of `own`, the fence is an equality with a mutation script, `identity.ts` is `who.ts`, the MCP face writes as `mcp`.* *Added 2026-09-05 on the human's word, after a survey of master for dependencies that go around Cordis rather than through it.* The survey found four, and one that is fine.
 - **xyne-spaces imports chat.** `packages/plugins/xyne-spaces/src/config.ts` imports `SESSION_TYPE` from `olai-plugin-chat/binding`, the kind word chat teaches for a node's seating, and `olai-plugin-chat` is in xyne-spaces' `package.json`. The file argues the import is deliberate, and the argument was right before 12b: there was no door to name. Now there is. Chat offers `chat.seating` with `Offers.own`: over a reading, which node is seated by which session, the fold `SESSIONS` does today. xyne-spaces names it in `needs`, drops the import and the dependency, and gets what an import never gave it: it waits for chat, unloads when chat leaves, and comes back when chat does. This is the first shipped tenant of `own`.
 - **Chat imports identity.** `packages/plugins/chat/src/browser/chat/Speaker.tsx` imports `whoAmI`, `saying` and `UserIcon` from `olai-plugin-identity/person`, and `olai-plugin-identity` is in chat's `package.json`. What crosses is a rendering kit over core's own `who.get`, not identity's reading, so it is core furniture that happens to live in a plugin. It moves to `@olai/web` (or the plugin API's browser door), the way the shortlist kit stayed core in phase 13, and both packages drop the dependency. Browser halves have no `own`, and this needs none.
 - **Core names chat and xyne-spaces in `localState.ts`.** The `legacyFor` table from phase 15 migrates the old `chat/`, `wake/`, `heard/`, `hold/` and `mirror/` layouts by plugin name, with an expiry note. The human ruled no backwards compatibility on 2026-09-04, so the table and the old-layout reads are deleted; a fresh start writes the new layout.
