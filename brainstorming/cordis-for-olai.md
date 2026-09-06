@@ -267,10 +267,10 @@ Each phase is one PR, green alone, and self-sufficient: a phase finishes what it
   - ✅ [16. Transports are rows, and profiles are bundles](#phase-16-transports-are-rows-and-profiles-are-bundles) — merged (#524)
   - ✅ [16a. The transports are plugins, not infrastructure rows](#phase-16a-the-transports-are-plugins-not-infrastructure-rows) — merged (#536)
   - ✅ [17. The vault is a row](#phase-17-the-vault-is-a-row) — merged (#534)
-  - ⬜ [18. Olai is a bundle; the shell and content are plugins](#phase-18-olai-is-a-bundle-the-shell-and-content-are-plugins) — rewritten and approved 2026-09-05; one complete PR, [juspay/olai#538](https://github.com/juspay/olai/pull/538) under review. **Blocked on:** no earlier Olai phase. Includes server bindings, independent outlines and Markdown, and owned UI lifetimes.
+  - ✅ [18. Olai is a bundle; the shell and content are plugins](#phase-18-olai-is-a-bundle-the-shell-and-content-are-plugins) — merged 2026-09-06 ([juspay/olai#538](https://github.com/juspay/olai/pull/538)). Includes server bindings, independent outlines and Markdown, and owned UI lifetimes.
   - ✅ [19. `--extra-plugins` and `--without-plugins`, in the CLI and the Nix module](#phase-19---extra-plugins-and---without-plugins-in-the-cli-and-the-nix-module) — merged (#535)
 
-**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-06: phase 18 is under review in [juspay/olai#538](https://github.com/juspay/olai/pull/538).
+**Dispatch rule:** a line says what it is blocked on and what it may run beside; two open lines with no blocker and no "not beside" between them are a parallel pair. As of 2026-09-06: phase 18 is merged in [juspay/olai#538](https://github.com/juspay/olai/pull/538).
 
 ### The phases
 
@@ -484,7 +484,7 @@ The websocket listener and the `/mcp` route become two rows, `ws` and `mcp`, eac
 - **Not started.** Core's own surface members (outlines, documents, the page streams), now assigned to independent outline and Markdown providers in phase 18 rather than to the vault row; the Org format itself (#466) as the second value of the row's `format`, which is its own lane once this row is the seam.
 ### Phase 18. Olai is a bundle; the shell and content are plugins
 
-(one PR; [juspay/olai#538](https://github.com/juspay/olai/pull/538) under review; blocked on no earlier Olai phase). *Rewritten on the human's approval, 2026-09-05. This replaces the earlier “shell's own faces” brief in full. The human rejected that boundary, distinguished outlines from Markdown, and approved the complete extraction as one PR. The steps below are implementation order inside that PR, not separately mergeable phases.*
+(one PR; merged 2026-09-06, [juspay/olai#538](https://github.com/juspay/olai/pull/538), merge commit `8ef9704ac`). *Rewritten on the human's approval, 2026-09-05. This replaces the earlier “shell's own faces” brief in full. The human rejected that boundary, distinguished outlines from Markdown, and approved the complete extraction as one PR. The steps below are implementation order inside that PR, not separately mergeable phases.*
 
 **Outcome.** The permanent host starts and coordinates plugins. The bundle supplies Olai's layout, navigation, outline editor and Markdown reader. Neither an outline nor a workspace is required to run the host. This phase establishes the boundary that a subsequent extraction into `@kolu/surface-cordis-app` can reuse; it does not create that package.
 
