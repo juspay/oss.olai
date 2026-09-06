@@ -1913,3 +1913,35 @@
 {"id":"deferral-485-ctrl-space-mac","parent":"deferral-485-group","ord":"a1","title":"Ctrl+Space on a Mac shares a key with the OS input-source switch","done":"2026-09-03T06:32:41-04:00","desc":"When that OS shortcut is on, the fold chord loses; the fold is drawn to be impossible to lose (the gutter triangle two pixels away), and the choice is argued where the chord is matched (keys.ts). Your call whether a Mac-specific fold key is wanted.","created":"2026-09-03T02:25:04-04:00","changed":"2026-09-03T06:32:41-04:00","custom":{"node":"missing-chords","pr-url":"https://github.com/juspay/olai/pull/485"}}
 {"id":"deferral-484-trace-only","parent":"8rtvfi13","ord":"aU","title":"#484: the coalesced silence is trace-only, no surface counter","cancelled":"2026-09-03T06:52:38-04:00","desc":"Moot: #484 rejected and closed by the human 2026-09-03.","created":"2026-09-03T00:17:01-04:00","changed":"2026-09-03T06:52:38-04:00","custom":{"node":"doorbell-duplicate-set-note","pr-url":"https://github.com/juspay/olai/pull/484"}}
 {"id":"pqmhvni7","parent":"iqi040lz","ord":"a5","title":"/#roster-reviewer-contract","created":"2026-09-03T16:46:39-04:00"}
+{"id":"zlr15jy0","ord":"aL","title":"projects/olai/roadmap.olai"}
+{"id":"sd-search","parent":"zlr15jy0","ord":"a0","title":"Search & filtering","created":"2026-08-22T13:12:28-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"perfc-search","parent":"zlr15jy0","ord":"a1","title":"Search & filtering","created":"2026-08-21T13:01:43-04:00","changed":"2026-09-06T15:55:58-04:00"}
+{"id":"defc-search","parent":"zlr15jy0","ord":"a2","title":"Search & filtering","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"sd-nav","parent":"zlr15jy0","ord":"a3","title":"Navigation, panes & layout","created":"2026-08-22T13:12:28-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"defc-nav","parent":"zlr15jy0","ord":"a4","title":"Navigation, panes & layout","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-nav","parent":"zlr15jy0","ord":"a5","title":"Navigation, panes & layout","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"infra-nav","parent":"zlr15jy0","ord":"a6","title":"Navigation, panes & layout","created":"2026-08-21T13:01:36-04:00","changed":"2026-09-06T15:55:58-04:00"}
+{"id":"sd-docs","parent":"zlr15jy0","ord":"a7","title":"Documents & markdown","created":"2026-08-22T13:12:29-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"defc-docs","parent":"zlr15jy0","ord":"a8","title":"Documents & markdown","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-docs","parent":"zlr15jy0","ord":"a9","title":"Documents & markdown","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"sd-dates","parent":"zlr15jy0","ord":"aA","title":"Dates: journal, calendar & agenda","created":"2026-08-22T13:12:30-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-dates","parent":"zlr15jy0","ord":"aB","title":"Dates: journal, calendar & agenda","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"sd-mcp","parent":"zlr15jy0","ord":"aC","title":"MCP & external agents","created":"2026-08-22T13:12:30-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-mcp","parent":"zlr15jy0","ord":"aD","title":"MCP & external agents","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"infra-mcp","parent":"zlr15jy0","ord":"aE","title":"MCP & external agents","created":"2026-08-21T13:01:36-04:00","changed":"2026-09-06T15:55:58-04:00"}
+{"id":"bug-outline","parent":"zlr15jy0","ord":"aF","title":"Outline view & rendering","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"bug-tasks","parent":"zlr15jy0","ord":"aG","title":"Task model & edges","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"perfc-server","parent":"zlr15jy0","ord":"aH","title":"Server & wire","created":"2026-08-21T13:01:43-04:00","changed":"2026-09-06T15:55:58-04:00"}
+{"id":"defc-server","parent":"zlr15jy0","ord":"aI","title":"Server & wire","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"perfc-model","parent":"zlr15jy0","ord":"aJ","title":"Format & data model","created":"2026-08-21T13:01:43-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"defc-model","parent":"zlr15jy0","ord":"aK","title":"Format & data model","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"defc-edit","parent":"zlr15jy0","ord":"aL","title":"Keyboard editing","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-edit","parent":"zlr15jy0","ord":"aM","title":"Keyboard editing","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"perfc-tests","parent":"zlr15jy0","ord":"aN","title":"Testing & CI","created":"2026-08-21T13:01:43-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"defc-tests","parent":"zlr15jy0","ord":"aO","title":"Testing & CI","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-tests","parent":"zlr15jy0","ord":"aP","title":"Testing & CI","created":"2026-08-21T13:01:16-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"defc-git","parent":"zlr15jy0","ord":"aQ","title":"Git & sync","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
+{"id":"bug-git","parent":"zlr15jy0","ord":"aR","title":"Git & sync","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"bug-chat","parent":"zlr15jy0","ord":"aS","title":"Chat panel","created":"2026-08-21T13:01:15-04:00","changed":"2026-09-06T15:55:57-04:00"}
+{"id":"infra-chat","parent":"zlr15jy0","ord":"aT","title":"Chat panel","created":"2026-08-21T13:01:36-04:00","changed":"2026-09-06T15:55:58-04:00"}
+{"id":"defc-upstream","parent":"zlr15jy0","ord":"aU","title":"Upstream (kolu)","desc":"2026-08-24 roadmap review: this heading is EMPTY while the repo's two live upstream deferrals are against claude-agent-acp, not kolu, and live elsewhere — upstream-steer-after-queued-hang (features → Chat panel, claude-agent-acp#1039) and the #365 patch-PR ask (claude-agent-acp#1038, tracked on chat-background-tasks-visible's pr prop). Either widen this heading past \"(kolu)\" and adopt them, or retire it — the human's taxonomy call.","created":"2026-08-21T13:01:55-04:00","changed":"2026-09-06T15:55:59-04:00"}
