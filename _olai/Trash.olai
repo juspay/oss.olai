@@ -2726,3 +2726,52 @@
 {"id":"day-mirror-oge","parent":"day-2026-08-31","ord":"a5","mirror":"odu-green-exit-nonzero"}
 {"id":"day-mirror-af","parent":"day-2026-08-31","ord":"a6","mirror":"appliance-fold"}
 {"id":"day-mirror-mi","parent":"day-2026-08-31","ord":"a8","mirror":"mcp-mirrors-invisible"}
+{"id":"day-2026-09-01","parent":"8qp3of10","ord":"aK","title":"2026-09-01 day lanes","desc":"The three lanes the human queued overnight, released to run IN PARALLEL on their word this morning — superseding the strictly-one-at-a-time pacing they set the night before. All three are claude-opus authored, which is exactly the roster's hard cap of three concurrent Opus author lanes.\n\nThe mirrors lane stays on yesterday's board, where it was dispatched.","created":"2026-09-01T08:21:46-04:00"}
+{"id":"day-mirror-ssg","parent":"day-2026-09-01","ord":"a0","mirror":"self-sigterm-guard"}
+{"id":"day-mirror-ows","parent":"day-2026-09-01","ord":"a1","mirror":"odu-wait-settle-short"}
+{"id":"day-mirror-cab","parent":"day-2026-09-01","ord":"a2","mirror":"chat-adapter-bump"}
+{"id":"day-mirror-wso","parent":"day-2026-09-01","ord":"a3","mirror":"wake-scope-outlines"}
+{"id":"day-mirror-odb","parent":"day-2026-09-01","ord":"a4","mirror":"odu-doorbell"}
+{"id":"day-mirror-oct","parent":"day-2026-09-01","ord":"a5","mirror":"odu-checkout-targeting"}
+{"id":"day-mirror-tns","parent":"day-2026-09-01","ord":"a6","mirror":"task-notification-spill"}
+{"id":"day-mirror-psm","parent":"day-2026-09-01","ord":"a7","mirror":"plugin-spaces-mirror"}
+{"id":"day-mirror-nap","parent":"day-2026-09-01","ord":"a8","mirror":"node-agents-p1"}
+{"id":"day-mirror-dmc","parent":"day-2026-09-01","ord":"a9","mirror":"doorbell-missing-claim"}
+{"id":"day-mirror-obi","parent":"day-2026-09-01","ord":"aA","mirror":"odu-baked-in"}
+{"id":"day-mirror-fsh","parent":"day-2026-09-01","ord":"aB","mirror":"flake-shakeout"}
+{"id":"day-2026-09-03","parent":"8qp3of10","ord":"aL","title":"2026-09-03 day lanes","desc":"The morning: #483 (the plugin API is Effect) took a third review round from the human themselves, went green at 35973ef7 and MERGED 07:21 ET as 31f85927 on their approval. Dispatched today: the finite nag's kolu half (opencode), then Cordis phase 5, agents as plugins (claude-opus, manual merge) the moment #483 landed. Filed behind both merges: the finite nag's olai plugin half (grok).","created":"2026-09-03T07:02:27-04:00","changed":"2026-09-03T07:22:32-04:00"}
+{"id":"day-mirror-nagc","parent":"day-2026-09-03","ord":"a0","mirror":"kolu-nag-count"}
+{"id":"day-mirror-dnc","parent":"day-2026-09-03","ord":"a1","mirror":"doorbell-nag-count"}
+{"id":"day-mirror-aap","parent":"day-2026-09-03","ord":"a2","mirror":"agents-as-plugins"}
+{"id":"day-mirror-o99","parent":"day-2026-09-03","ord":"a3","mirror":"odu-pr99-green"}
+{"id":"i9r0o3q4","parent":"day-2026-09-03","ord":"a4","mirror":"sidebar-agent-press-scenario"}
+{"id":"kt8id5lg","parent":"day-2026-09-03","ord":"a6","mirror":"caret-flows"}
+{"id":"day-2026-08-30","parent":"8qp3of10","ord":"aM","title":"2026-08-30 day lanes — the morning triage's three dispatches (the validation family's two remaining holes + the done-hidden reveal)","done":"2026-08-31T20:25:53-04:00","desc":"The human ratified all three overnight rulings, ordered both validation holes and all three small fixes dispatched (the census one-liner rides the landing lane), and had the Inbox swept. Deferral still parked for their own look: the #437 phone composition (deferral-437-phone).","created":"2026-08-30T09:12:29-04:00","changed":"2026-08-31T20:25:53-04:00"}
+{"id":"day-mirror-baf","parent":"day-2026-08-30","ord":"a0","mirror":"blame-at-fault"}
+{"id":"day-mirror-nrd","parent":"day-2026-08-30","ord":"a1","mirror":"no-refusal-drift"}
+{"id":"day-mirror-lrd","parent":"day-2026-08-30","ord":"a2","mirror":"landing-reveals-done"}
+{"id":"day-mirror-plug","parent":"day-2026-08-30","ord":"a3","mirror":"plugin-system"}
+{"id":"day-mirror-fpp","parent":"day-2026-08-30","ord":"a4","mirror":"flake-petit-pair"}
+{"id":"day-mirror-cif","parent":"day-2026-08-30","ord":"a5","mirror":"chat-interrupt-flake"}
+{"id":"day-mirror-rb","parent":"day-2026-08-30","ord":"a6","mirror":"rooted-bundle"}
+{"id":"day-2026-09-02","parent":"8qp3of10","ord":"aN","title":"2026-09-02 day lanes","done":"2026-09-03T09:14:07-04:00","desc":"THE OVERNIGHT RULES (the human, 2026-09-02 ~20:55 ET, unavailable until morning): (1) phase 3 (plugin-directories) runs to auto-merge on green — DONE 21:22 ET; (2) phase 4 (plugin-api-effect, claude-opus) and the settle fix (settle-from-the-run, opencode) run IN PARALLEL; (3) phase 4 is brought to green with reviews folded and then STOPS — manual merge in the morning; the settle fix auto-merges on green with its live proof; (4) BLOCKS: a question the brief already answers, the orchestrator answers; anything outside the brief — a design call, a deferral, a scope change, a human-gated step — parks the lane with an Inbox entry for the morning; (5) evidence: skipped for phase 4; the settle fix proves itself live (two real runs, with and without linger); (6) never launch a doorbell-watched run with `linger` until the settle fix lands; (7) THREE MORE, SERIALLY, opencode authoring (~21:40 ET): the Unassigned row in a fresh vault → two nags make one note → the missing chords; each dispatches when the one before merges and its terminal is closed; (8) LAST ACT OF THE NIGHT (~21:45 ET): once everything else has merged, phase 4's PR takes latest master and gets a green CI at that head, then waits open for the morning.","created":"2026-09-02T07:55:29-04:00","changed":"2026-09-03T09:14:07-04:00"}
+{"id":"day-mirror-esp","parent":"day-2026-09-02","ord":"a0","mirror":"state-pollution"}
+{"id":"day-mirror-ab73","parent":"day-2026-09-02","ord":"a1","mirror":"adapter-bump-73"}
+{"id":"day-mirror-cdz","parent":"day-2026-09-02","ord":"a2","mirror":"create-doc-zero-bytes"}
+{"id":"day-mirror-odm","parent":"day-2026-09-02","ord":"a3","mirror":"odu-doorbell-miss"}
+{"id":"day-mirror-nam","parent":"day-2026-09-02","ord":"a4","mirror":"node-agents-p3"}
+{"id":"day-mirror-csp","parent":"day-2026-09-02","ord":"a5","mirror":"cordis-spike"}
+{"id":"day-mirror-rhm","parent":"day-2026-09-02","ord":"a6","mirror":"remove-hacking-md"}
+{"id":"day-mirror-lb","parent":"day-2026-09-02","ord":"a7","mirror":"live-bundle"}
+{"id":"day-mirror-cs","parent":"day-2026-09-02","ord":"a8","mirror":"cordis-server"}
+{"id":"day-mirror-cto","parent":"day-2026-09-02","ord":"a9","mirror":"contract-reinjected-on-reopen"}
+{"id":"day-mirror-bd","parent":"day-2026-09-02","ord":"aA","mirror":"blank-drafts"}
+{"id":"day-mirror-aaf","parent":"day-2026-09-02","ord":"aB","mirror":"acp-audit-fix"}
+{"id":"day-mirror-pd","parent":"day-2026-09-02","ord":"aC","mirror":"plugin-directories"}
+{"id":"day-mirror-ordh","parent":"day-2026-09-02","ord":"aD","mirror":"odu-run-dies-with-mcp-host"}
+{"id":"day-mirror-ob","parent":"day-2026-09-02","ord":"aE","mirror":"odu-bump-run-dies"}
+{"id":"day-mirror-dss","parent":"day-2026-09-02","ord":"aCV","mirror":"doorbell-settle-is-socket-death"}
+{"id":"day-mirror-pae","parent":"day-2026-09-02","ord":"aCl","mirror":"plugin-api-effect"}
+{"id":"day-mirror-ufv","parent":"day-2026-09-02","ord":"aF","mirror":"unassigned-door-fresh-vault"}
+{"id":"day-mirror-nc","parent":"day-2026-09-02","ord":"aG","mirror":"doorbell-duplicate-set-note"}
+{"id":"day-mirror-mc","parent":"day-2026-09-02","ord":"aH","mirror":"missing-chords"}
