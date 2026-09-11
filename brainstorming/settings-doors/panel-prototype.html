@@ -1,0 +1,241 @@
+<title>Olai Plugins Panel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f3ee; --panel:#f8f7f3; --ink:#262624; --muted:#6f6e68; --faint:#a3a29b;
+  --rule:#dedcd4; --seg:#e8e6df; --seg-on:#cfd6c9; --on:#3f6b3c; --off:#cdccc4;
+  --knob:#ffffff; --alarm:#a3392e; --alarm-bg:#f6e4e1; --hover:#ecebe4; --focus:#3f6b3c;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#1c1c1a; --panel:#232321; --ink:#e6e4dc; --muted:#a09f97; --faint:#6c6b65;
+  --rule:#35352f; --seg:#2d2d29; --seg-on:#3b4f39; --on:#5c9457; --off:#4a4a44;
+  --knob:#f1f0ea; --alarm:#e07c70; --alarm-bg:#3a2523; --hover:#2b2b27; --focus:#7fb879;
+}}
+:root[data-theme="dark"]{
+  --bg:#1c1c1a; --panel:#232321; --ink:#e6e4dc; --muted:#a09f97; --faint:#6c6b65;
+  --rule:#35352f; --seg:#2d2d29; --seg-on:#3b4f39; --on:#5c9457; --off:#4a4a44;
+  --knob:#f1f0ea; --alarm:#e07c70; --alarm-bg:#3a2523; --hover:#2b2b27; --focus:#7fb879;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.35 "IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;display:flex;justify-content:center;padding:28px 16px}
+.panel{width:min(880px,100%);aspect-ratio:1/1;background:var(--panel);border:1px solid var(--rule);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.12);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+.head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--rule)}
+.head .title{font-weight:600;letter-spacing:.04em}
+.head .file{color:var(--muted);text-decoration:none;font-size:12px}
+.head .file:hover{color:var(--ink)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:6px 16px;overflow:auto}
+.col{min-width:0}
+details{border-bottom:1px solid var(--rule);padding:6px 0}
+details:last-child{border-bottom:0}
+summary{list-none;list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary .count{font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+summary .caret{display:inline-block;width:10px;color:var(--muted);font-size:10px}
+details[open] .caret{transform:rotate(90deg)}
+.row{display:grid;grid-template-columns:96px 1fr 38px;gap:0 10px;align-items:start;padding:5px 0;min-height:30px}
+.row .name{padding-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:baseline}
+.row .name a{color:var(--faint);text-decoration:none;font-size:11px;visibility:hidden}
+.row:hover .name a{visibility:visible}
+.row .name a:hover{color:var(--ink)}
+.row.off .knobs{opacity:.42}
+.knobs{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;min-width:0}
+.knob{display:inline-flex;align-items:center;gap:6px;position:relative}
+.knob .k{color:var(--muted);font-size:12px;white-space:nowrap}
+.knob .src{width:6px;height:6px;border-radius:50%;background:var(--on);flex:none;display:none}
+.knob.set .src{display:inline-block}
+.knob .reset{border:0;background:none;color:var(--faint);cursor:pointer;font:inherit;padding:0 2px;display:none}
+.knob.set .reset{display:inline}
+.knob .reset:hover{color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden;background:var(--seg)}
+.seg button{border:0;background:none;color:var(--muted);font:inherit;font-size:12px;padding:3px 8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--seg-on);color:var(--ink);font-weight:500}
+.seg button:hover{color:var(--ink)}
+.seg button:focus-visible,input:focus-visible,.sw:focus-visible,summary:focus-visible,a:focus-visible,.reset:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+input.v{font:inherit;font-size:12px;color:var(--ink);background:var(--seg);border:1px solid var(--rule);border-radius:5px;padding:3px 7px;width:6ch;min-width:0}
+input.v.w{width:9ch} input.v.ww{width:22ch}
+input.v.bad{border-color:var(--alarm);background:var(--alarm-bg)}
+.knob .why{position:absolute;top:100%;left:0;margin-top:3px;font-size:11px;color:var(--alarm);white-space:nowrap;display:none}
+.knob.bad .why{display:block}
+.knob.bad{margin-bottom:16px}
+.sw{justify-self:end;width:36px;height:20px;border-radius:10px;border:0;background:var(--off);position:relative;cursor:pointer;padding:0;margin-top:3px;transition:background .15s}
+.sw[aria-checked="true"]{background:var(--on)}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--knob);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.sw[aria-checked="true"]::after{left:18px}
+.sw.session::before{content:"";position:absolute;inset:-3px;border:1px dashed var(--faint);border-radius:13px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 16px;border-top:1px solid var(--rule);color:var(--muted);font-size:11px}
+.foot .legend{display:flex;gap:14px;align-items:center}
+.foot .legend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--on);margin-right:5px;vertical-align:middle}
+.foot .legend b{display:inline-block;width:14px;height:10px;border:1px dashed var(--faint);border-radius:6px;margin-right:5px;vertical-align:middle}
+.serve .row{grid-template-columns:96px 1fr}
+.serve .facts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--muted);font-size:11px;padding:2px 0 0}
+@media (max-width:700px){.panel{aspect-ratio:auto}.cols{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.sw,.sw::after{transition:none}}
+</style>
+
+<div class="panel" role="dialog" aria-label="plugins">
+  <div class="head">
+    <span class="title">⧉ plugins</span>
+    <a class="file" href="#" title="Open _olai/Settings.olai">_olai/Settings.olai ↗</a>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <details open>
+        <summary><span><span class="caret">▶</span> Conversation</span><span class="count" data-count></span></summary>
+        <div class="row" data-name="chat">
+          <span class="name">chat <a href="#" title="Open the chat node in _olai/Settings.olai">↗</a></span>
+          <div class="knobs">
+            <span class="knob" data-key="idle-ms" data-default="900000" title="milliseconds an idle node conversation keeps its process"><span class="k">idle</span><input class="v w" value="900000" inputmode="numeric"><span class="k">ms</span><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+          </div>
+          <button class="sw" role="switch" aria-checked="true" aria-label="Enable chat"></button>
+        </div>
+        <div class="row" data-name="claude"><span class="name">claude <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable claude"></button></div>
+        <div class="row" data-name="codex"><span class="name">codex <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable codex"></button></div>
+        <div class="row off" data-name="opencode"><span class="name">opencode <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="false" aria-label="Enable opencode"></button></div>
+        <div class="row off" data-name="pi"><span class="name">pi <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="false" aria-label="Enable pi"></button></div>
+      </details>
+
+      <details open>
+        <summary><span><span class="caret">▶</span> Vault</span><span class="count" data-count></span></summary>
+        <div class="row" data-name="vault">
+          <span class="name">vault <a href="#">↗</a></span>
+          <div class="knobs">
+            <span class="knob" data-key="format" data-default="olai" title="the format used to read and write documents"><span class="k">format</span><span class="seg" role="group" aria-label="Format"><button aria-pressed="true">olai</button></span></span>
+          </div>
+          <button class="sw session" role="switch" aria-checked="true" aria-label="Enable vault" title="session-only"></button>
+        </div>
+        <div class="row" data-name="settings"><span class="name">settings <a href="#">↗</a></span><div class="knobs"></div><button class="sw session" role="switch" aria-checked="true" aria-label="Enable settings" title="session-only"></button></div>
+        <div class="row" data-name="git">
+          <span class="name">git <a href="#">↗</a></span>
+          <div class="knobs">
+            <span class="knob set" data-key="commit" data-default="manual" title="when a write is recorded"><span class="k">commit</span><span class="seg" role="group" aria-label="Commit"><button aria-pressed="false">off</button><button aria-pressed="false">manual</button><button aria-pressed="true">auto</button></span><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob" data-key="push" data-default="off" title="when recorded writes are pushed"><span class="k">push</span><span class="seg" role="group" aria-label="Push"><button aria-pressed="true">off</button><button aria-pressed="false">auto</button></span><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+          </div>
+          <button class="sw" role="switch" aria-checked="true" aria-label="Enable git"></button>
+        </div>
+        <div class="row" data-name="search"><span class="name">search <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable search"></button></div>
+        <div class="row" data-name="identity">
+          <span class="name">identity <a href="#">↗</a></span>
+          <div class="knobs">
+            <span class="knob set" data-key="login-header" data-default="X-Auth-Request-User" title="the trusted login header"><span class="k">login</span><input class="v ww" value="Tailscale-User-Login"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob set" data-key="name-header" data-default="X-Auth-Request-Preferred-Username" title="the display-name header"><span class="k">name</span><input class="v ww" value="Tailscale-User-Name"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob" data-key="email-header" data-default="" title="the email header; blank follows the login header"><span class="k">email</span><input class="v ww" value="" placeholder="follows login"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob set" data-key="picture-header" data-default="X-Auth-Request-Picture" title="the picture header"><span class="k">picture</span><input class="v ww" value="Tailscale-User-Profile-Pic"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob" data-key="avatar-template" data-default="" title="an avatar URL containing {login}"><span class="k">avatar</span><input class="v ww" value="" placeholder="https://…/{login}.png"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+          </div>
+          <button class="sw" role="switch" aria-checked="true" aria-label="Enable identity"></button>
+        </div>
+        <div class="row" data-name="journal"><span class="name">journal <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable journal"></button></div>
+        <div class="row" data-name="vault-plugins"><span class="name">vault-plugins <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable vault-plugins"></button></div>
+      </details>
+    </div>
+
+    <div class="col">
+      <details open>
+        <summary><span><span class="caret">▶</span> Appliances</span><span class="count" data-count></span></summary>
+        <div class="row off" data-name="kolu">
+          <span class="name">kolu <a href="#">↗</a></span>
+          <div class="knobs">
+            <span class="knob" data-key="watch.held-for" data-default="1m" title="how long a terminal holds attention before a report"><span class="k">held</span><input class="v" value="1m"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob set bad" data-key="watch.nag" data-default="10m" title="the reminder interval, optionally capped with /count"><span class="k">nag</span><input class="v bad" value="10" aria-invalid="true"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button><span class="why">spell a unit (10m, 10m/4) · using 10m</span></span>
+            <span class="knob" data-key="watch.heartbeat" data-default="30m" title="how long a silent watch remains healthy"><span class="k">beat</span><input class="v" value="30m"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+          </div>
+          <button class="sw" role="switch" aria-checked="false" aria-label="Enable kolu"></button>
+        </div>
+        <div class="row off" data-name="odu"><span class="name">odu <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="false" aria-label="Enable odu"></button></div>
+        <div class="row off" data-name="xyne-spaces">
+          <span class="name">xyne-spaces <a href="#">↗</a></span>
+          <div class="knobs">
+            <span class="knob" data-key="reply-limit" data-default="500" title="maximum reply characters mirrored to a channel"><span class="k">reply limit</span><input class="v" value="500" inputmode="numeric"><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob" title="OLAI_SPACES_URL"><span class="k">url</span><span class="k" style="color:var(--faint)">env · unset</span></span>
+            <span class="knob" title="OLAI_SPACES_TOKEN"><span class="k">token</span><span class="k" style="color:var(--faint)">env · unset</span></span>
+          </div>
+          <button class="sw" role="switch" aria-checked="false" aria-label="Enable xyne-spaces"></button>
+        </div>
+      </details>
+
+      <details>
+        <summary><span><span class="caret">▶</span> Transports</span><span class="count" data-count></span></summary>
+        <div class="row" data-name="ws"><span class="name">ws <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable ws"></button></div>
+        <div class="row" data-name="mcp"><span class="name">mcp <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable mcp"></button></div>
+        <div class="row" data-name="web-app"><span class="name">web-app <a href="#">↗</a></span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable web-app"></button></div>
+      </details>
+
+      <details>
+        <summary><span><span class="caret">▶</span> This tab</span><span class="count" data-count></span></summary>
+        <div class="row" data-name="ui-renderer"><span class="name">ui-renderer</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable ui-renderer"></button></div>
+        <div class="row" data-name="layout"><span class="name">layout</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable layout"></button></div>
+        <div class="row" data-name="sidebar"><span class="name">sidebar</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable sidebar"></button></div>
+        <div class="row" data-name="preferences"><span class="name">preferences</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable preferences"></button></div>
+        <div class="row" data-name="theme"><span class="name">theme</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable theme"></button></div>
+        <div class="row" data-name="plugin-inspector"><span class="name">plugin-inspector</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable plugin-inspector"></button></div>
+        <div class="row" data-name="navigation"><span class="name">navigation</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable navigation"></button></div>
+      </details>
+
+      <details>
+        <summary><span><span class="caret">▶</span> Pages</span><span class="count" data-count></span></summary>
+        <div class="row" data-name="outlines"><span class="name">outlines</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable outlines"></button></div>
+        <div class="row" data-name="markdown"><span class="name">markdown</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable markdown"></button></div>
+        <div class="row" data-name="files"><span class="name">files</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable files"></button></div>
+        <div class="row" data-name="pins"><span class="name">pins</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable pins"></button></div>
+        <div class="row" data-name="capture"><span class="name">capture</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable capture"></button></div>
+        <div class="row" data-name="trash"><span class="name">trash</span><div class="knobs"></div><button class="sw" role="switch" aria-checked="true" aria-label="Enable trash"></button></div>
+      </details>
+
+      <details class="serve" open>
+        <summary><span><span class="caret">▶</span> This serve</span><span class="count">127.0.0.1:7714</span></summary>
+        <div class="row">
+          <span class="name">log</span>
+          <div class="knobs">
+            <span class="knob set" data-key="log-level" data-default="info" title="the minimum severity this serve logs"><span class="seg" role="group" aria-label="Log level"><button aria-pressed="true">debug</button><button aria-pressed="false">info</button><button aria-pressed="false">warn</button><button aria-pressed="false">error</button></span><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+            <span class="knob" data-key="log-format" data-default="auto" title="log presentation; auto follows the destination terminal"><span class="seg" role="group" aria-label="Log format"><button aria-pressed="true">auto</button><button aria-pressed="false">logfmt</button><button aria-pressed="false">pretty</button></span><span class="src" title="set in Settings.olai"></span><button class="reset" title="Use default">↺</button></span>
+          </div>
+          <div class="facts"><span>hostname srid-mbp · env</span><span>host 127.0.0.1 · flag</span><span>port 7714 · flag</span><span>origins none</span><span>bearer set</span></div>
+        </div>
+      </details>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="legend"><span><i></i>set in Settings.olai</span><span><b></b>session-only</span></span>
+    <span>memory · $XDG_STATE_HOME/olai</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  const counts = () => document.querySelectorAll("details").forEach(d => {
+    const c = d.querySelector("[data-count]"); if (!c) return
+    const sw = [...d.querySelectorAll(".row .sw")]
+    const on = sw.filter(s => s.getAttribute("aria-checked") === "true").length, off = sw.length - on
+    c.textContent = off === 0 ? `${on} on` : on === 0 ? `${off} off` : `${on} on · ${off} off`
+  })
+  document.querySelectorAll(".sw").forEach(sw => sw.addEventListener("click", () => {
+    const next = sw.getAttribute("aria-checked") !== "true"
+    sw.setAttribute("aria-checked", String(next))
+    sw.closest(".row")?.classList.toggle("off", !next)
+    counts()
+  }))
+  const mark = knob => {
+    const d = knob.dataset.default ?? ""
+    const seg = knob.querySelector(".seg"), input = knob.querySelector("input")
+    const v = seg ? seg.querySelector('[aria-pressed="true"]')?.textContent : input?.value
+    if (!knob.classList.contains("bad")) knob.classList.toggle("set", v !== d)
+  }
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    b.parentElement.querySelectorAll("button").forEach(o => o.setAttribute("aria-pressed", String(o === b)))
+    mark(b.closest(".knob"))
+  }))
+  document.querySelectorAll("input.v").forEach(i => {
+    i.addEventListener("input", () => { const k = i.closest(".knob"); k.classList.remove("bad"); i.classList.remove("bad"); mark(k) })
+    i.addEventListener("keydown", e => { if (e.key === "Escape") { i.value = i.closest(".knob").dataset.default ?? ""; mark(i.closest(".knob")); i.blur() } })
+  })
+  document.querySelectorAll(".reset").forEach(r => r.addEventListener("click", () => {
+    const knob = r.closest(".knob"), d = knob.dataset.default ?? ""
+    const seg = knob.querySelector(".seg"), input = knob.querySelector("input")
+    if (seg) seg.querySelectorAll("button").forEach(o => o.setAttribute("aria-pressed", String(o.textContent === d)))
+    if (input) { input.value = d; input.classList.remove("bad") }
+    knob.classList.remove("bad"); mark(knob)
+  }))
+  document.querySelectorAll("a").forEach(a => a.addEventListener("click", e => e.preventDefault()))
+  counts()
+})()
+</script>
