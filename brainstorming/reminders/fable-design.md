@@ -13,7 +13,7 @@ The 2026-08-24 review note on the node narrowed the scope: PR #358 shipped the a
 | At what moment? | When the reader's `today` and the journal's `owed` reading first agree that `overdue + today > 0` for a day this browser has not yet been reminded about. That happens at local midnight for an open tab, on wake for a tab that slept through it, at boot for a tab opened later, or mid-day when the count leaves zero. |
 | Quiet rule | **None about focus** (ruled by the human, 2026-09-11). A reminder fires whether or not the tab is in front of the reader: it is a once-a-day digest with content, not a banner about a form already on screen, so chat's "watched means nothing" doctrine does not carry over. The only quiet rules are the preferences and the per-day dedupe. Nothing in the reminders circuit reads focus or visibility. |
 | Dedupe | One reminder per browser per local day, recorded under `olai.reminders.said` in `localStorage` **before** the alert is raised and followed across tabs on the `storage` event. The OS tag is `olai:due:<day>`, so two banners for one day replace rather than stack. A reload, a reconnect, a second tab opened later, and a second dated task the same day all raise nothing. |
-| What it says | Title: what this deployment calls itself (`olai [box]`, the same word chat's banner wears). Body: `Agenda: 2 overdue, 3 on today`, the phrase the Agenda entry already speaks as its label, exported from `browser/agenda/owed.ts` and spelled once. |
+| What it says | Title: what this deployment calls itself (`olai [box]`, the same word chat's banner wears). Body: `Agenda: 2 overdue, 3 on today`, the phrase the Agenda entry already speaks as its label, exported from `browser/agenda/owed.ts` and spelled once. The chime is best-effort: it plays only if the page has had a gesture, and a skipped chime is not replayed (§3.5). |
 | Click | Opens `/agenda` in the focused pane. The payload is `{ kind: "due" }`, the second arm of the click union. It names no day, for the reason the union's header gives: what "it" is is a fact the app has when the press arrives. |
 | Badge and tab mark | **Reminders never badge and never mark the tab.** The durable face of due work is the Agenda entry and rail dot, which already exist and already clear themselves. The badge stays chat's alone and keeps counting questions. |
 | Knob | One browser preference, **Reminders** (on/off, default on), drawn as a third row under Alerts and Alert sound and frozen when Alerts is off, exactly as Alert sound is. It is a browser preference and not a `Config` knob because it answers "how does this browser alert me", the door the other two rows already use (§6). |
@@ -96,6 +96,19 @@ Two open tabs of one olai can both receive the same frame at the same instant, b
 
 What the design does promise, and the tests pin: a tab that opens **after** the reminder, and a tab that **reloads** after it, raise nothing.
 
+### 3.5 The chime is best-effort, and the notification is the reminder
+
+Ruled 2026-09-11 on Codex's finding. The browser's autoplay rule means an `AudioContext` opens only inside a pointer or keyboard gesture; `chime.ts` takes the first gesture the page gets and, before one, `chime()` returns without playing and grumbles once. A reminder raised at boot, or on a frame that arrives before anybody has touched the page, therefore has no sound available to it.
+
+The rule:
+
+- **The notification is the reminder.** It is raised whenever §3.2 says raise, gesture or no gesture, and `said` is written before it as before.
+- **The chime is the second half of it, offered when it can be.** It plays if the audio context is already unlocked, and is skipped otherwise. A skipped chime is not owed later: nothing remembers it, nothing replays it at the next gesture, and the day stays said.
+
+Why not replay at the first gesture: the first gesture of the day is almost always a click into the app, which is a reader already looking at it, and a chime at that moment is a sound about a banner they have had for an hour. It would also give the reminder a second piece of per-day state to keep in step with `said`. Why not change the audio policy: it is the platform's, and the channel already answers it the honest way (`grumble`, no throw).
+
+What this costs is stated in the docs: on a tab nobody has clicked since it opened, the daily reminder is a notification without a sound. The chat alerts have the same limit and say so in their hint ("The first plays only after you click the page").
+
 ## 4. What it says, and what a press opens
 
 **The notice.**
@@ -111,7 +124,7 @@ What the design does promise, and the tests pin: a tab that opens **after** the 
 
 `phraseOf(owed)` is `browser/agenda/owed.ts`'s private `said` with its "Agenda — " prefix taken off and the function exported: the words "2 overdue, 3 on today" are then spelled once for the entry's label, its title, the rail's label and the banner. The entry keeps its own prefix. No titles of nodes ride the banner: the `owed` stream is two integers, and the reading that has titles is the whole agenda page, which a reminder has no business subscribing to.
 
-**The chime** is the channel's, gated by Alert sound, and rings at the same moment the banner is asked for. Both are raised untracked, after `said` is written.
+**The chime** is the channel's, gated by Alert sound, and is asked for at the same moment the banner is; it plays only if the page has already had a gesture (§3.5). Both are raised untracked, after `said` is written, notification first.
 
 **The press.** The worker focuses or opens the window (the framework's half). The page's half is `navigation.state`'s `go(agendaRoute)`: the focused pane shows `/agenda`. Nothing scrolls and nothing waits for rows: the agenda's own page is the answer. A cold-start press (no window open) is handed over by the seam at startup and takes the same path. A press on a reminder from a previous day opens today's agenda, which is the right answer to "take me to it".
 
@@ -127,7 +140,7 @@ What the design does promise, and the tests pin: a tab that opens **after** the 
 
 Hints, read off the choice in force:
 
-- on, alerts on: "Once a day, a chime and a notification say what is overdue and on today."
+- on, alerts on: "Once a day, a notification says what is overdue and on today, with a chime if you have clicked the page since it opened."
 - off: "Nothing says the day has work on it. The Agenda entry still shows it."
 - alerts off: "Alerts are off, so nothing will remind you."
 
@@ -195,7 +208,8 @@ Rules the reviewer holds each of these to:
 - `journal/src/browser/reminders/notice.test.ts`: tag per day, title falls back to `olai`, body phrase for overdue only, today only, both.
 - `journal/src/browser/agenda/owed.test.ts`: `phraseOf` and the entry's `said` agree word for word (one spelling).
 - `alerts/src/notify.test.ts` (moved from chat): the validator accepts `ask` and `due`, refuses `{}`, a string, and an unknown kind.
-- `alerts/src/channel.test.ts`: `notify` and `chime` are no-ops while Alerts is off; `chime` while Alert sound is off; `wear` clamps to 0 while Alerts is off and puts 0 back when Alerts flips off with a count worn.
+- `alerts/src/channel.test.ts`: `notify` and `chime` are no-ops while Alerts is off; `chime` while Alert sound is off; `wear` clamps to 0 while Alerts is off and puts 0 back when Alerts flips off with a count worn; `chime()` before any gesture returns without throwing and starts no oscillator (`chime.test.ts` already covers the unlock; this pins the call before it).
+- `journal/src/browser/reminders/circuit.test.ts`: over fake signals and a fake channel, the order of calls is `said` write, `notify`, `chime`; a `chime` that does nothing leaves `said` written and is not called again on the next frame of the same day.
 - `journal/src/browser/claims.test.ts` (new, the shape of `chat/src/browser/claims.test.ts`): no file under `browser/reminders/` spells `setTimeout(`, `setInterval(`, `hasFocus`, `visibilityState` or `BroadcastChannel`; the only speller of `olai:due:` is `reminders/notice.ts`; the only writer of `olai.reminders.said` is `reminders/said.ts`.
 - Existing: `chat/attention/alarm.test.ts`, `notice.test.ts`, `reveal.test.ts`, `badge.test.ts`, `chime.test.ts` unchanged in substance; `badge.test.ts` and `chime.test.ts` move with their modules. `elsewhere.browsertest.ts` and `asked.browsertest.ts` stay in chat.
 - `@olai/bundle`: `fence.test.ts` gains the alerts package in its tenant and door lists; `plugin_docs.test.ts` requires `docs/plugins/alerts.md`; `testids` collision check covers the moved `prefsAllowNotify`.
@@ -206,15 +220,15 @@ Rules the reviewer holds each of these to:
 
 New feature file `packages/tests/features/the_day_reminds_you.feature`, every scenario `@scratch:...` and `@alerts` (or `@alerts-denied`), each ending `And there should be no page errors`:
 
-1. **With work owed, the day is announced once, at boot** (a corpus with overdue work such as `good`, whose `order` node is dated 2026-08-10): a notification whose body says `overdue`, tagged `olai:due:<today>` (the step computes today as `isoDayOf(new Date())`, the way `a task is due today` already does), the chime rang, the tab says nothing is waiting, and the Agenda entry burns.
-2. **Work that becomes due during the day** (a scratch with nothing owed, then `a task is due today`): a notification says `1 on today`, the chime rang, the Agenda entry burns.
+1. **With work owed, the day is announced once, at boot, without a sound** (a corpus with overdue work such as `good`, whose `order` node is dated 2026-08-10): a notification whose body says `overdue`, tagged `olai:due:<today>` (the step computes today as `isoDayOf(new Date())`, the way `a task is due today` already does), **no chime rang** (the page has had no gesture, §3.5), the tab says nothing is waiting, and the Agenda entry burns; then `I click the page` (a gesture) and still no chime rang, because a skipped chime is not replayed.
+2. **Work that becomes due during the day, after a gesture, chimes** (a scratch with nothing owed, `I click the page` first, then `a task is due today`): a notification says `1 on today`, the chime rang, the Agenda entry burns. The gesture step is the one the chat feature relies on implicitly (its scenarios press Send); here it is written out, because the chime is what the scenario is about. `I click the page` is a new step in `reminders_steps.ts` (a real pointer click on the page body; the existing `I click the page {string}` in `html_steps.ts` names a file and is not it).
 3. **Once a day** (after 2): a second task dated today raises no second notification and no second chime (`support/alerts.ts` counts both), and the entry's count moves to 2.
 4. **A reload says nothing again** (after 2): reload, the worker ready, no notification, no chime.
 5. **A second tab says nothing** (after 2): open a second page in the context, the worker ready, no notification in it.
 6. **Pressing it opens the agenda** (after 2): `the notification is pressed` (the existing step, with the `due` payload), the pane shows the agenda page.
 7. **Reminders off is off, and off does not spend the day** (`I set Reminders to "off"`, a task due today): no notification, no chime, the Agenda entry still burns, `this browser has stored that reminders are "off"`; then `I set Reminders to "on"`: the reminder arrives.
 8. **Alerts off freezes the Reminders row**: `I set Alerts to "off"`, the Reminders row cannot be set and explains itself; and a task due today raises nothing.
-9. **A browser that refused notifications still chimes** (`@alerts-denied`, work owed at boot): no notification, the chime rang, no tab mark.
+9. **A browser that refused notifications still chimes** (`@alerts-denied`, a scratch with nothing owed, `I click the page` first, then `a task is due today`): no notification, the chime rang, no tab mark. Driven after a gesture rather than at boot for §3.5's reason; the boot half of the denied case is that no notification is raised and nothing throws, which scenario 1's corpus under `@alerts-denied` may assert as a second example if Codex finds it cheap.
 10. **The journal off takes the row and the reminder with it** (switch `journal` off on the plugins panel, a task due today: nothing; switch it on: the reminder arrives, the Reminders row is back).
 11. **The alerts row off leaves the calendar standing** (`@rows-off:alerts`): the plugins panel says `journal` waits on `alerts.channel` for its reminders component, the preferences panel has no Alerts rows, the calendar and the agenda page still draw, a dated task still lights its day.
 
@@ -226,6 +240,8 @@ Existing files that must pass unchanged in substance: `the_agent_waits_on_you.fe
 - `said` is written before `notify` and `chime` are called, in that order, in one place.
 - Nothing in `reminders/` calls `wear`, `setTabWaiting` or `chrome.waiting`.
 - Nothing in `reminders/` reads focus or visibility, and the test package gained no `hasFocus` wrapper, no `@behind` tag and no window steps.
+- The chime is called after `notify`, never gates `said`, and nothing in `reminders/` or the channel remembers a chime that did not play. `chime.ts`'s unlock is unchanged.
+- Every e2e scenario that asserts `the chime rang` supplies a gesture before the frame that raises; every scenario that raises at boot asserts `no chime rang`.
 - The banner names no node and no day in its `data`.
 - The Reminders row is frozen, not hidden, with Alerts off.
 - Chat's e2e press step still walks the full handshake (id, ackable source, durable claim) and the reminders press step reuses it with the other payload rather than a second implementation.
@@ -269,5 +285,6 @@ The roadmap node in `oss.olai` is the human's to update; this document is the te
 - **Ownership move ratified (§7 A):** the channel leaves chat for the tab-only `alerts` row, as written.
 - **Quiet rule flipped:** the first draft had "watched at the first non-zero reading spends the day silently". That is gone. A reminder fires in a focused, watched tab too. The per-day dedupe stays exactly as written: `olai.reminders.said` recorded before raising, followed across tabs, one OS tag per day, so a reload, a reconnect, a second tab or a second task the same day never re-alert. The `@behind` tag and the `hasFocus` window steps the first draft proposed are not needed by anything and are not to be built.
 - **Default on** for the Reminders row stands.
+- **The chime is best-effort** (ruled on Codex's finding that a boot-time chime cannot play before a gesture, §3.5): the notification is the reminder and fires whenever the rule says; the chime plays only if audio is already unlocked and is otherwise skipped for the day, not replayed. Scenarios 1 and 9 changed accordingly; the per-day dedupe and the no-focus rule are untouched.
 
 Nothing is left for the human to decide. The design is ready for Codex.
