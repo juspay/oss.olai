@@ -76,11 +76,13 @@ import { surface, faces } from './wire'
 export default definePlugin({
   name: 'jobs',
   needs: [Surfaces, JobStore],
-  apply: Effect.gen(function* () {
+  config: JobConfig, // static Effect schema, decoded before acquisition
+  configUpdates: 'reapply',
+  apply: config => Effect.gen(function* () {
     const store = yield* JobStore
     yield* (yield* Surfaces).register({
       surface, faces,
-      deps: yield* makeJobsDeps(store),
+      deps: yield* makeJobsDeps(store, config),
     })
   }),
 })
@@ -113,6 +115,38 @@ export const board = serviceTag<{
 
 The board plugin provides this service through owner-bound `Offers`, and uses an optional renderer plugin to draw its cards. Another shell can expose documents, a canvas, or no UI at all. Surface never imports `board`, `addCard`, panel geometry or layout slots. Rendering and asynchronous view work close with their contribution scopes. Navigation owns addresses/history and its outlet; layout arranges services and content supplies pages. These are downstream responsibilities, not a required plugin-per-view scheme. A renderer root lasts only as long as its renderer; its contributed layout and child locations can leave sooner.
 
+### Configuration is a lifecycle input
+
+```ts
+// Static plugin declaration:
+config: WorkerConfig,
+configUpdates: 'reapply', // changed config closes the activation and starts another
+apply: config => startWorker(config),
+
+// A plugin that consumes changing policy without restarting:
+config: WatchConfig,
+configUpdates: 'live',
+needs: [WatchPolicy], // app-owned, narrow service with revision subscription
+apply: Effect.gen(function* () {
+  const policy = yield* WatchPolicy
+  yield* followWatchPolicy(policy) // owns subscription and update behavior
+}),
+```
+
+Bundle rows declare available modules, profiles and default enablement. Schemas declare configuration; an app-selected settings provider supplies desired values and enablement. The loader reconciles patches without writing its build declaration. Identical decoded policy preserves activation. A `live` declaration keeps activation config unchanged: the plugin must consume revisions through its declared service, while the host still applies enablement.
+
+The host owns a serialized configuration worker. It observes provider identity as well as revision, rejects publications from withdrawn providers, and finishes already accepted patches independently of the publishing plugin's lifetime. Provider disappearance marks the reading unavailable without reverting applied options. Configuration revisions are distinct from composition revisions and transport epochs.
+
+```text
+an authorized durable edit:
+  validate → write through the app's persistence service
+  → observe that provider's resulting revision → reconcile → acknowledge
+```
+
+Writing and runtime application are separate outcomes. If the provider leaves before settlement, report that the write persisted but reconciliation was not confirmed. Configuration and enablement have separate authorization. Durable/session-only control policy belongs to the app; the low-level loader never decides which edits persist. Bootstrap-provider controls must leave a recovery path so stored policy cannot disable its own reader.
+
+Storage format, settings-file discovery, recovery rules and settings UI remain plugins. Schema-derived controls can consume static declarations and redacted reports; they do not belong in the host. Keep authored values, effective values, provenance and validation problems distinct. A broken or unavailable settings source must not silently become an editable empty configuration. Secrets and machine resources have separate environment declarations; secret values never enter reports or browser state. Browser interaction state remains owned by its activation rather than being persisted as server configuration.
+
 ## 3. Packages and ownership
 
 ```text
@@ -136,7 +170,7 @@ your application
 | Owned Surface registration and incremental composition | Writer identity, ticket minting, credentials |
 | Bundle loader/build integration and browser reconciliation | App selection policy, plugin approval policy |
 | Shared listener and scoped route/upgrade registration | Shell, navigation, panels, inspector UI |
-| Ordered startup and joined shutdown | Persistence schemas and migrations |
+| Ordered startup, configuration reconciliation and joined shutdown | Settings storage/UI, persistence schemas and migrations |
 
 Split generic listener ownership from connection authorization. Generic write-tag/caller-context plumbing is a candidate framework capability; writer identity and authorization policy belong to the application. Policy is an explicit supplied service, not a silent no-policy fallback. Low-level Surface remains usable without Cordis; the Cordis bridge remains usable without Surface. Preserve Olai's import-closure tests so browser doors cannot pull in Node-only code.
 
@@ -150,7 +184,8 @@ needs: [HostTab, board]
 // Authorized app procedure delegates to the host-owned operation:
 set: ({ input }) => control.flip(input.name, input.enabled)
 // HostControl.flip forks into hostScope; the request only joins it.
-// Disabling this request's transport cannot abandon the operation.
+// Both configuration edits and enablement transitions outlive their request.
+// Their authorization and persistence policy are separate app decisions.
 ```
 
 ### Ownership is smaller than a plugin
@@ -184,7 +219,9 @@ type Composition = {
 }
 
 // Separate records, separate lifetimes:
-selectedModules              // bundle/operator intent
+builtModules                 // available static declarations, including disabled rows
+desiredConfiguration         // provider identity/revision, values and enablement
+selectedModules              // reconciled bundle/profile/policy selection
 serverPluginActivations      // server dependency status and failures
 composition                  // what is actually mounted and exposed
 browserPluginActivations     // status in THIS tab
@@ -204,7 +241,8 @@ Independently built contracts must be checked before binding. Begin with an expl
 
 ```text
 startup:
-  open host → provide inputs → mount bundle → settle providers
+  open host → provide inputs → mount settings bootstrap providers
+  → accept initial policy → patch remaining bundle rows → settle providers
   → compose surfaces → watch runtime fault → provide listener service
   → settle transports
   → validate policy → open requested listeners
@@ -215,10 +253,11 @@ stop one activation:
 
 stop app:
   mark stopping → close network admission → withdraw listener provision
-  → close host/drain plugin rows → close composed surfaces
+  → stop/join configuration worker → close host/drain plugin rows
+  → close composed surfaces
 ```
 
-The app recipe owns startup barriers, shared-port ownership and browser composition. Preserve Olai's lifecycle/gate tests, including dependent cleanup awaiting an interrupted provider call. A hanging finalizer is still hanging; cancellation cannot preempt synchronous JavaScript, and disposal does not undo writes already made.
+The app recipe owns startup barriers, shared-port ownership and browser composition. When using a settings provider, its bootstrap set and dependencies are app-declared; initial policy is applied before other rows can acquire resources. A settings-free profile uses its explicit build/profile selection. Stop the configuration worker before withdrawing its providers, preventing teardown from scheduling fresh patches. Preserve Olai's lifecycle/gate tests, including dependent cleanup awaiting an interrupted provider call. A hanging finalizer is still hanging; cancellation cannot preempt synchronous JavaScript, and disposal does not undo writes already made.
 
 **Isolation has a real limit today:** plugin initialization and ordinary request failures can be contained, but a mounted Surface connector/install fault or a sibling teardown fault rejects the rooted runtime's `done` and is fatal to the whole bundle. This does not include every periodic read failure; Surface has cell-local error paths too. Preserve fatal shutdown for structural faults. Stronger per-sibling structural isolation is a separate Surface design/proof, not a guarantee this extraction can claim.
 
@@ -256,16 +295,20 @@ Job board: prove that the extracted framework handles real lifetime changes.
   replace jobs         → regression: old handles cannot reach replacement state
   break reconciliation → show failure; do not report the revision applied
   fault a connector    → assert fatal bundle shutdown, not false isolation
+  edit worker config   → changed value reapplies; identical value preserves activation
+  edit live policy     → subscriber updates without replacing its activation
+  disable at boot      → the disabled worker never acquires resources
+  withdraw settings    → applied options remain; pending settlement reports its outcome
 ```
 
 Additional ownership proofs: two hosts in one process; close one of two panes while the other keeps updating; stale release after same-object replacement; conflicting multi-key registration; stop during delayed resource acquisition; optional provider absent then restored; reconnect resumes fresh values; remote write committed but acknowledgement lost. Test outcomes and finalizers rather than requiring a particular helper spelling. Ship parameterized fence checks for both per-door import closure and known live activation state hidden behind exported contracts/re-exports. Local mutable state and owned closures remain valid; syntactic bans are not ownership proofs. Keep the bridge's pinned-engine assumption inventory with the extraction; neither fences nor a passing suite prove arbitrary application cleanup correct.
 
-Counter is the first extraction consumer, not sufficient evidence of generality on its own. The job board adds an independently composed domain and lifecycle tests before finalizing public APIs.
+Counter is the first extraction consumer, not sufficient evidence of generality on its own. The job board adds an independently composed domain and lifecycle tests before finalizing public APIs. Its optional filter component owns activation-local selection and contributes into a child location owned by the board view. Removing the filter leaves the board usable; reconnect preserves selection while replacing the component resets it. Query changes release prior readings, and stale results cannot trigger an action for the new query.
 
 ## 7. Delivery and validation
 
 1. Extract the Effect/Cordis bridge with its tests and pinned-engine assumptions.
-2. Extract composition and listener ownership; run the counter fixture through them.
+2. Extract composition, listener ownership and generic configuration reconciliation; run the counter fixture through them.
 3. Supply the complete server/browser recipe and adapter plugins.
 4. Validate the public interfaces with the job board.
 
