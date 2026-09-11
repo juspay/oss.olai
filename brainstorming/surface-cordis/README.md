@@ -2,7 +2,7 @@
 
 **Start with [the consolidated plan](consolidation.md)** — high-level application usage, plugin ownership, extraction boundaries, and the demonstration app.
 
-Reviewed 2026-09-08 against latest local/GitHub master at research time:
+Initial review, 2026-09-08:
 
 - Olai: `ce5f233e1b7591d177f72a5041c1f18eacc8a9fb`
 - Kolu: `56152455be3d7e4e339d406d95eaa2e72152a2db` (also Olai's pinned Kolu revision)
@@ -31,3 +31,9 @@ The original implementation review remains pinned above. The additional [archite
 The synthesis now includes ownership below plugin level, atomic/token-owned registration, late-acquisition cleanup, and the existing reconnect guarantees. Proposed composition revisions remain conditional on a demonstrated gap. Original independent designs and the first review are historical; this follow-up updates the consolidated plan.
 
 Fable agreed to the follow-up reconciliation and stood down. Added disposable browser instances, separate host read/control services, canonical rank, and an explicit pin-preservation policy. Composition notifications remain an audit/proof target: gated dispatch must preserve synchronous recomposition and avoid self-disposal deadlock.
+
+## Current source review
+
+Reviewed the clean local Olai checkout `5e087668e799be256161643648bda1a3a67e3ebc` on 2026-09-11. The synthesis includes the configuration lifecycle from #569 and the optional component/state patterns exercised by #576. The docs relocation in #577 changes reference paths, not the package boundaries. Cordis and Kolu source pins are unchanged across this update.
+
+Evidence inspected: `packages/effect-cordis/src/{plugin,host,loader}.ts`, `packages/server/src/{configuration,serve,runtime}.ts`, configuration/serve tests, `packages/plugin-api/src/configuration.ts`, `packages/plugins/search/src/{browser.tsx,contracts/box.ts}`, and `docs/architecture/plugin-system.md`. Runtime tests were inspected, not rerun; this update changes only the design.
