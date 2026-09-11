@@ -309,13 +309,47 @@ Additional ownership proofs: two hosts in one process; close one of two panes wh
 
 Counter is the first extraction consumer, not sufficient evidence of generality on its own. The job board adds an independently composed domain and lifecycle tests before finalizing public APIs. Its optional filter component owns activation-local selection and contributes into a child location declared by the board view's own contribution; it exists only while that parent contribution is active. Removing the filter leaves the board usable; reconnect preserves selection while replacing the component resets it. Query changes release prior readings, and stale results cannot trigger an action for the new query.
 
-## 7. Delivery and validation
+## 7. Two PRs, developed together
 
-1. Extract the Effect/Cordis bridge with its tests and pinned-engine assumptions.
-2. Extract composition, listener ownership and generic configuration reconciliation; run the counter fixture through them.
-3. Supply the complete server/browser recipe and adapter plugins.
-4. Validate the public interfaces with the job board.
+| PR | Scope | Dependency |
+|---|---|---|
+| **Kolu — draft** | Shared packages, adapter plugins, build integration, examples and framework tests | Independently builds and tests; no dependency on the Olai checkout |
+| **Olai — draft** | Consume the shared packages, remove extracted implementations, adapt app-owned services and retain product behavior | Pins an immutable commit from the Kolu draft, with matching source/dependency hashes |
 
-Migrate Olai alongside each slice so its existing tests exercise the shared implementation. Each capability has one owner namespace. MCP uses Surface's rooted catalogs and `reroster`.
+Open the pair after the first reviewable extraction and link them in both directions. Keep both open throughout the work. The phases below are commits and review checkpoints within these two PRs, not separately merged PRs.
 
-Preserve the exact Cordis source pin and required hydration/patch behavior through Kolu's existing npins/pnpm conventions. Verify pin/lock/hash reproducibility and upstream assumption tests before shipping. The bridge owns all private-engine assumptions. Surface changes must meet the repository's paired-consumer and CI requirements.
+### Phases
+
+| Phase | Kolu draft | Olai draft | Exit evidence |
+|---|---|---|---|
+| **1. Bridge** | Extract `effect-cordis`, its loader, engine pin integration and assumption tests | Repin, replace bridge imports, remove the local implementation and update ownership fences | Reproducible dependency hydration; bridge tests and Olai lifecycle tests pass |
+| **2. Server recipe** | Add owned Surface composition, listener and configuration worker; server entry point; counter fixture | Use the recipe for boot, configuration, transport admission and shutdown; retain app policy/storage | Counter works headless and in-process; configuration, ownership, shutdown and self-disposal tests pass |
+| **3. Browser and adapters** | Add disposable browser host, generated bundle integration and transport plugins | Consume browser recipe and adapters; keep renderer/shell/content as plugins; remove duplicated orchestration | Browser graph excludes server imports; web counter, reconnect, two-instance isolation and existing Olai workflows pass |
+| **4. Complete app proof** | Build the job board from public package exports and exercise §6 | Close integration gaps against the same Kolu revision | Job-board lifetime/configuration scenarios and Olai behavior pass; APIs demonstrated by consumers |
+| **5. Final review** | Complete reviews, docs, formatting and required full CI | Repin to final reviewed Kolu HEAD, complete reviews and required full CI | Exact commit pair recorded; both branches current, conflict-free and ready for human review |
+
+Migrate Olai in each phase. One implementation owns each extracted capability; avoid compatibility shims or a parallel framework that the real app does not use. Keep the exact Cordis source pin and required hydration/patch behavior through Kolu's existing npins/pnpm conventions. The bridge owns private-engine assumptions and their tests.
+
+### Pin and validation discipline
+
+```text
+change Kolu → commit/push → repin Olai to that exact SHA + hashes
+            → validate the consumer → record the tested pair
+
+review changes Kolu again → previous Olai evidence is stale → repeat
+```
+
+Use immutable source pins, not a branch URL or a local workspace link as delivery evidence. Keep both branches based on current upstream master; rerun affected checks after rebases or integration fixes. Final readiness requires full repository-prescribed CI for both final heads, including required platform coverage, plus visible evidence for browser behavior. A green counter alone does not establish Olai compatibility.
+
+The pair adds the new Cordis packages while preserving existing Surface public APIs and behavior. Any required change to those existing contracts must satisfy Kolu's corresponding-consumer rules; the Olai PR does not substitute for a required Drishti PR. Such a dependency changes the delivery scope and must be resolved before calling this two-PR pair ready.
+
+### Human merge gate
+
+Both PRs remain unmerged until the human is satisfied with the design, implementation, review findings and evidence. Agents prepare and validate the pair; only the human merges.
+
+1. Present the two PR links, tested commit pair, CI results, demonstrations and any remaining limitations.
+2. The human merges **Kolu first**.
+3. Verify the Olai pin resolves to the accepted Kolu implementation. If the merge rebased or squashed it, update the still-open Olai PR to the resulting Kolu commit and hashes, then rerun its required validation. Do not treat pre-merge evidence as proof for a different source revision.
+4. The human merges **Olai** after its final pin and checks are satisfactory.
+
+Neither PR is merged at an intermediate phase. Pin adjustments and integration fixes stay in these same two PRs.
