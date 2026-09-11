@@ -30,7 +30,7 @@ Keep these boundaries exactly. Every value that crosses a package boundary at ru
 
 | Thing | Owner | How others reach it |
 |---|---|---|
-| Slot names `outline.row.aside`, `outline.row.fold`, `outline.page.foot` | `olai-plugin-outlines` (`src/slots.ts`) | `slots.register(...)` from chat |
+| Slot names `outline.row.aside`, `outline.row.fold`, `outline.page.head`, `outline.page.foot` | `olai-plugin-outlines` (`src/slots.ts`) | `slots.register(...)` from chat |
 | Which folds are open in this tab | `olai-plugin-chat` browser, one module beside `browser/agents/showing.ts` | not shared; the fold face reads it |
 | A conversation's transcript, state, saying | server, one subscription per `Conversing` per tab | keyed wire cells/collections (§5.2) |
 | Which conversations this tab is reading, and their liveness hold | chat server (`scoped.ts` scheduler) | acquired by subscribing, released by unsubscribing |
@@ -64,9 +64,10 @@ Commit after each numbered item; run `just typecheck-fast-remote` after 5.1 to 5
 
 - `outline.row.aside`: face `(props: {readonly node: string}) => JSX.Element`, `keyedBy: "nothing"`. Drawn by `NodeLine.tsx` after `ProgressBadge`/`Aside` and before `DateBadge`, on every row including the zoomed subject's title line in `NodePage.tsx`. `Tree.tsx:708` and `DatedRow.tsx:147` pass `aside` as a prop today; keep that prop and draw the slot beside it. Add a `PluginAsides` component beside `Doors.tsx`.
 - `outline.row.fold`: same face, drawn by `NodeBody.tsx` on an ordinary row between the `PluginDoors` site (`:200`) and the note line. This is where the unfolded conversation lands.
-- `outline.page.foot`: same face, drawn by `NodePage.tsx` after the children `Tree`. The zoomed conversation lands here.
+- `outline.page.head`: same face, drawn by `NodePage.tsx` under the title line and above the zoomed subject's `NodeBody` (the drawer at `NodePage.tsx:181` belongs to that `NodeBody`, so this is the only mount point between title and drawer). The zoomed agent line lands here.
+- `outline.page.foot`: same face, drawn by `NodePage.tsx` after the children `Tree`. The zoomed conversation and composer land here.
 
-Register the three in `docs/plugins/chat.md`'s seat table (`## Where it hangs in the tab`) with "who declares it" and "what chat brings". Unit test the slot table the way the existing names are tested.
+Register the four in `docs/plugins/chat.md`'s seat table (`## Where it hangs in the tab`) with "who declares it" and "what chat brings". Unit test the slot table the way the existing names are tested.
 
 e2e: none yet; the faces arrive in 5.3 and 5.5.
 
@@ -124,7 +125,7 @@ e2e: new `node_agent_folds.feature`: unfold draws the transcript and composer un
 
 ### 5.6 The zoomed page
 
-Register `outline.page.foot` with the same `Fold` component in an `unbounded` variant (no `max-h`, the pane's own scroll). `NodePage.tsx` draws the `outline.row.aside` slot on the title line so the standing sits beside `3/7`. The `AgentLine` goes under the title, above the drawer, via the foot component's own top section, so the property chip and note keep their order from `NodeBody`.
+Register `outline.page.head` with `AgentLine` (mark, model, usage, cue, `fresh start`; no `open the page ›`, since this is the page) and `outline.page.foot` with the `Fold` component in an `unbounded` variant (no `max-h`, the pane's own scroll) and without its own agent line. `NodePage.tsx` draws the `outline.row.aside` slot on the title line so the standing sits beside `3/7`. Order on the page is then: breadcrumb, title line with standing, agent line (head slot), drawer with the property chip, note, children `Tree`, conversation and composer (foot slot). Both slot faces build their `Chat` from the same `createChat(conv)` for the node, under one owner per page, so the page holds one subscription, not two.
 
 A zoomed plain node draws the foot too: a dashed composer with placeholder `ask about <title>…`, an engine picker (default: the machine's first engine, as `verbs.tsx` orders them), and the notice `sending starts this node's agent · memory: this subtree (<memoryOf>)`. Sending runs `startAgentSession` and then the queued message goes into the opened conversation (the "message typed while a conversation is opening waits for it" rule at `docs/chat.md:181` already covers the gap; reuse it).
 
@@ -183,7 +184,7 @@ e2e (`node_agents.feature`, replacing the Unassigned scenarios; stored-sessions 
 Same PR. Rewrite, do not append:
 
 - `docs/chat.md`: `## Node agents` and everything under it, `## Which conversation you come back to` (the note records nothing new; reload folds everything and the sidebar's Recent is how you get back), `## Who, and which model, the header names` (now "the agent line"), the `sessions (n)` paragraphs (retired, say why) and `+ new` (now mints an Inbox node), `## Moving the chats you already have` (the filer, the `Chats` node, the first commit's size, `Move to…` as reassignment, trash is final, nesting, the second machine), `## Asking about one node` (nearest ancestor agent), phone paragraphs. `docs/plugins/capture.md` (or wherever the Inbox is documented): the `Chats` node and the service capture declares.
-- `docs/plugins/chat.md`: seat table (`## Where it hangs in the tab`) with the three new slots and the removed `app.panel`/`app.header` seats.
+- `docs/plugins/chat.md`: seat table (`## Where it hangs in the tab`) with the four new slots (`outline.row.aside`, `outline.row.fold`, `outline.page.head`, `outline.page.foot`) and the removed `app.panel`/`app.header` seats.
 - `docs/architecture/e2e-coverage.md`: the node-agent scenario inventory; `docs/architecture/e2e-economy.md:46` if the unit/e2e split for scopes moved.
 - `docs/architecture/overview.md:181` section naming the roster.
 - `docs/images/acp/*.png` referenced from `docs/chat.md:70`: retake the three screenshots on the new page.
