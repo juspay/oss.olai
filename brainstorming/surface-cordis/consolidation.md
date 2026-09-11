@@ -14,6 +14,7 @@ await Effect.runPromise(Effect.scoped(serveBundle({
   bundle: new URL('./app.yml', import.meta.url),
   resolve: spec => import(spec),
   profile: 'web',
+  bootstrap: settingsBootstrap, // app-declared rows/dependencies needed to read policy
   root: { surface: appSurface, deps: appDeps, faces: appFaces },
   composition: appCompositionContract, // inert cell/schema selection; no live globals
   inputs: appInputs, // explicit app-owned boot services and access policy
@@ -126,7 +127,7 @@ apply: config => startWorker(config),
 // A plugin that consumes changing policy without restarting:
 config: WatchConfig,
 configUpdates: 'live',
-needs: [WatchPolicy], // app-owned, narrow service with revision subscription
+needs: [WatchPolicy], // proposed app service: own decoded namespace + revisions
 apply: Effect.gen(function* () {
   const policy = yield* WatchPolicy
   yield* followWatchPolicy(policy) // owns subscription and update behavior
@@ -135,7 +136,9 @@ apply: Effect.gen(function* () {
 
 Bundle rows declare available modules, profiles and default enablement. Schemas declare configuration; an app-selected settings provider supplies desired values and enablement. The loader reconciles patches without writing its build declaration. Identical decoded policy preserves activation. A `live` declaration keeps activation config unchanged: the plugin must consume revisions through its declared service, while the host still applies enablement.
 
-The host owns a serialized configuration worker. It observes provider identity as well as revision, rejects publications from withdrawn providers, and finishes already accepted patches independently of the publishing plugin's lifetime. Provider disappearance marks the reading unavailable without reverting applied options. Configuration revisions are distinct from composition revisions and transport epochs.
+A live policy service should project the authoritative decoded reading for its consumer rather than parse storage again. A reusable owner-stamped `OwnPolicy` service is an extraction candidate; its unavailable/last-applied behavior must be explicit. The app-specific `WatchPolicy` sketch illustrates that boundary.
+
+The host owns a serialized configuration worker. It observes provider identity as well as revision, rejects publications from withdrawn providers, and finishes already accepted patches independently of the publishing plugin's lifetime. Provider disappearance marks the reading unavailable without reverting applied options. Each accepted revision patches the affected rows as one batch, settles once, then publishes its reconciled result. Configuration revisions are distinct from composition revisions and transport epochs. Observe provider availability through the bridge's root-only `serviceChanges`; feature plugins receive declared services, never a host or unrestricted locator.
 
 ```text
 an authorized durable edit:
@@ -143,9 +146,9 @@ an authorized durable edit:
   → observe that provider's resulting revision → reconcile → acknowledge
 ```
 
-Writing and runtime application are separate outcomes. If the provider leaves before settlement, report that the write persisted but reconciliation was not confirmed. Configuration and enablement have separate authorization. Durable/session-only control policy belongs to the app; the low-level loader never decides which edits persist. Bootstrap-provider controls must leave a recovery path so stored policy cannot disable its own reader.
+Writing and runtime application are separate outcomes. If the provider leaves before settlement, report that the write persisted but reconciliation was not confirmed. Configuration and enablement have separate authorization. Durable/session-only control policy belongs to the app; the low-level loader never decides which edits persist. For persistent settings, the app declares the service roles required to read/recover policy. Resolve their current owners from live offers; stored enablement cannot disable those owners, including replacements. Their controls are explicitly session-scoped and ignored file enablement is reported. Bootstrap membership and this protection are separate facts.
 
-Storage format, settings-file discovery, recovery rules and settings UI remain plugins. Schema-derived controls can consume static declarations and redacted reports; they do not belong in the host. Keep authored values, effective values, provenance and validation problems distinct. A broken or unavailable settings source must not silently become an editable empty configuration. Secrets and machine resources have separate environment declarations; secret values never enter reports or browser state. Browser interaction state remains owned by its activation rather than being persisted as server configuration.
+Settings storage, discovery, recovery rules and UI remain plugins. A persistent-settings app can permit session-only switches while refusing value edits when its durable writer is unavailable; the framework must not silently substitute an in-memory edit. Schema-derived controls can consume static declarations and redacted reports; they do not belong in the host. Keep authored values, effective values, provenance and validation problems distinct. A broken or unavailable settings source must not silently become an editable empty configuration. The app defines bad-leaf and malformed-source recovery separately; any effective default must be reported with its validation problem. Invalid plugin configuration reaching activation fails before resource acquisition. Secrets and machine resources have separate environment declarations; secret values never enter reports or browser state. Browser interaction state remains owned by its activation rather than being persisted as server configuration. The host may declare an app-selected policy schema under its own reserved namespace; address/resource provenance belongs in reports, not editable behavior settings.
 
 ## 3. Packages and ownership
 
@@ -172,7 +175,7 @@ your application
 | Shared listener and scoped route/upgrade registration | Shell, navigation, panels, inspector UI |
 | Ordered startup, configuration reconciliation and joined shutdown | Settings storage/UI, persistence schemas and migrations |
 
-Split generic listener ownership from connection authorization. Generic write-tag/caller-context plumbing is a candidate framework capability; writer identity and authorization policy belong to the application. Policy is an explicit supplied service, not a silent no-policy fallback. Low-level Surface remains usable without Cordis; the Cordis bridge remains usable without Surface. Preserve Olai's import-closure tests so browser doors cannot pull in Node-only code.
+Split generic listener ownership from connection authorization. Generic write-tag/caller-context plumbing is a candidate framework capability; writer identity and authorization policy belong to the application. Policy is an explicit supplied service, not a silent no-policy fallback. Static write reservations, including file/key restrictions, must be enforced independently of whether the declaring row is active; disabling its provider cannot grant new authority. Reservation mechanics are generic candidates; the restricted fields and allowed actors are app policy. Low-level Surface remains usable without Cordis; the Cordis bridge remains usable without Surface. Preserve Olai's import-closure tests so browser doors cannot pull in Node-only code.
 
 Read-only host observations are declared `HostReports` (server) and `HostTab` (browser) services; the app's composition publication and inspector consume those rather than importing private runtime tables. `HostControl` is separate. The `composition` argument above selects an inert contract; it is not a service locator or captured live singleton. Scoped closures remain valid implementations. Each `followBundle` call owns its full client/reconciliation/report state and returns a disposable instance.
 
@@ -234,7 +237,7 @@ Revision/acknowledgement machinery is conditional: a same-name replacement or re
 
 Publish coherent mounted definitions and exposures together. A replacement with the same member names still has a new activation. MCP consumes the snapshot through **existing `reroster`**. Browser reconciliation uses existing link/redial machinery, including Olai's forced socket refresh when upgrade-header policy changes but the surface map does not. An adapter failure stays visible; it never advances a successful acknowledgement. Tabs need not apply the same revision simultaneously. Preserve surviving `Wired` consumers: connection replacement interrupts subscriptions, which resubscribe from a fresh snapshot after a pending interval. Check fresh data, not just connection health. No uninterrupted event delivery is promised, and no blanket browser-plugin restart or duplicate cache is justified by that interval.
 
-Do not put this whole record into core Surface. First prove the contract in the Cordis integration. A later reserved `system/roster` may carry a minimal transport-neutral mounted-surface manifest if another consumer needs it. Bundle metadata, browser chunk policy and per-tab status do not belong in that generic manifest. Plugin enable/disable remains an explicitly authorized control capability; it is not an automatically exposed `system.roster.set`.
+Do not put this whole record into core Surface. First prove the contract in the Cordis integration. A later reserved `system/roster` may carry a minimal transport-neutral mounted-surface manifest if another consumer needs it. Bundle metadata, browser chunk policy, settings provenance/errors, switch persistence and per-tab status do not belong in that generic manifest. Plugin enable/disable remains an explicitly authorized control capability; it is not an automatically exposed `system.roster.set`.
 
 Independently built contracts must be checked before binding. Begin with an explicit exact-compatibility rule and visible refusal. Start from existing mount `identity.contractVersion` and `isContractVersionCompatible`; separately prove whether those express the required independently built contract check before adding a new fingerprint. Do not promise schema migrations or an arbitrary third-party plugin marketplace.
 
@@ -258,7 +261,7 @@ stop app:
   → close composed surfaces
 ```
 
-The app recipe owns startup barriers, shared-port ownership and browser composition. When using a settings provider, its bootstrap set and dependencies are app-declared; initial policy is applied before other rows can acquire resources. A settings-free profile uses its explicit build/profile selection. Stop the configuration worker before withdrawing its providers, preventing teardown from scheduling fresh patches. Preserve Olai's lifecycle/gate tests, including dependent cleanup awaiting an interrupted provider call. A hanging finalizer is still hanging; cancellation cannot preempt synchronous JavaScript, and disposal does not undo writes already made.
+The app recipe owns startup barriers, shared-port ownership and browser composition. When using a settings provider, its bootstrap set and dependencies are app-declared independently of test/runtime profile names; initial policy is applied before other rows can acquire resources. Without a settings reader, the same worker accepts explicit build/profile defaults as its initial policy and settles the same readiness barrier. Stop the configuration worker before withdrawing its providers, preventing teardown from scheduling fresh patches. Preserve Olai's lifecycle/gate tests, including dependent cleanup awaiting an interrupted provider call. A hanging finalizer is still hanging; cancellation cannot preempt synchronous JavaScript, and disposal does not undo writes already made.
 
 **Isolation has a real limit today:** plugin initialization and ordinary request failures can be contained, but a mounted Surface connector/install fault or a sibling teardown fault rejects the rooted runtime's `done` and is fatal to the whole bundle. This does not include every periodic read failure; Surface has cell-local error paths too. Preserve fatal shutdown for structural faults. Stronger per-sibling structural isolation is a separate Surface design/proof, not a guarantee this extraction can claim.
 
@@ -304,7 +307,7 @@ Job board: prove that the extracted framework handles real lifetime changes.
 
 Additional ownership proofs: two hosts in one process; close one of two panes while the other keeps updating; stale release after same-object replacement; conflicting multi-key registration; stop during delayed resource acquisition; optional provider absent then restored; reconnect resumes fresh values; remote write committed but acknowledgement lost. Test outcomes and finalizers rather than requiring a particular helper spelling. Ship parameterized fence checks for both per-door import closure and known live activation state hidden behind exported contracts/re-exports. Local mutable state and owned closures remain valid; syntactic bans are not ownership proofs. Keep the bridge's pinned-engine assumption inventory with the extraction; neither fences nor a passing suite prove arbitrary application cleanup correct.
 
-Counter is the first extraction consumer, not sufficient evidence of generality on its own. The job board adds an independently composed domain and lifecycle tests before finalizing public APIs. Its optional filter component owns activation-local selection and contributes into a child location owned by the board view. Removing the filter leaves the board usable; reconnect preserves selection while replacing the component resets it. Query changes release prior readings, and stale results cannot trigger an action for the new query.
+Counter is the first extraction consumer, not sufficient evidence of generality on its own. The job board adds an independently composed domain and lifecycle tests before finalizing public APIs. Its optional filter component owns activation-local selection and contributes into a child location declared by the board view's own contribution; it exists only while that parent contribution is active. Removing the filter leaves the board usable; reconnect preserves selection while replacing the component resets it. Query changes release prior readings, and stale results cannot trigger an action for the new query.
 
 ## 7. Delivery and validation
 

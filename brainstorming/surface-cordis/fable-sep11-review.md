@@ -92,6 +92,17 @@ The worker rides `serviceChanges(host, ConfigurationSource)` (`host.ts:128-139`,
 
 The optional filter's contribution goes into a CHILD location the header contribution declares at registration (`children: [boxBelow]`, `browser.tsx:47`), so the filter can exist only while the header entry is active, and the header holds the faces it draws through its own `heldFaces` (`faces.ts`). Consolidation §6's demo sentence matches; add "declared as a child of the view's contribution" so the demo proves the child-location rule rather than a plain slot.
 
-## 4. Disposition
+## 4. Reconciliation — accepted
+
+The coordinator's scope distinctions are right and I take them without objection:
+
+- `WatchPolicy` was labelled proposed throughout; my §3.1 overstated it. The correction is the clarification: it consumes the host's decoded policy through an owner-scoped reading, and `OwnPolicy` is a possible extraction of that shape, not a mandatory new API.
+- Durable-only value edits and the leaf/file default behaviour (§3.3, §3.6) are olai's policy, not laws of every Cordis app. The framework obligation is narrower and I agree with it: outcomes are app-supplied and explicit, never a silent framework fallback, and olai's migration keeps its current behaviour.
+- My §3.2 sketch conflated two facts: bootstrap membership does not imply immunity from file enablement. Protected owners are derived from the app-declared provider roles (who offers the vault and the reader), as §3.4 already says; the `bootstrap:` comment should not have claimed the exemption.
+- Docs history stays out of consolidation.md; current source references live in README.md.
+
+Folded by the coordinator from this review: batch/settle/publish, explicit bootstrap, provider-derived recovery guards, root-only `serviceChanges`, static reservations independent of active rows, the host policy namespace, and the child-location proof.
+
+## 5. Disposition
 
 No overreach beyond §3.1's `WatchPolicy` being presented as existing. The eleven items above are additions of one to three sentences each, plus the `OwnPolicy` proposal and the `bootstrap:` row field. With them folded the configuration section is a faithful account of #569 as merged. Review closed; no implementation.
