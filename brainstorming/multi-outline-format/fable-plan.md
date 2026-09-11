@@ -82,10 +82,20 @@ export const FileKinds = serviceTag<FileKinds>("vault.file-kinds")
 
 ```ts
 export interface OutlineFormat {
-  readonly parse: (file: string, contents: string) => Result.Result<Outline, ReadonlyArray<OutlineError>>
+  /** `claims` is the table in force at the call, handed in by whoever holds it
+   *  (the codec, the writer's read-back, the vault's `outlineDiff`). A format
+   *  is a pure function of its three arguments; it never reads the registry
+   *  it was registered into. `outlineDocument` needs claims to derive a
+   *  file's links and title, which is why the argument exists. */
+  readonly parse: (file: string, contents: string, claims: Claims) => Result.Result<Outline, ReadonlyArray<OutlineError>>
   readonly serialize: (nodes: ReadonlyArray<Node>) => string
 }
 ```
+
+Ruled: three arguments, not a wrapper closing over the service. A row reading
+`FileKinds.current()` inside the function it registers there would be reading
+its own registration, and a per-call read is still a hidden dependency. The
+codec already holds the table; it passes it.
 
 `@olai/format` also gains an inert value type the rest of the leaf reads
 instead of the table:
@@ -126,11 +136,14 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   takes them out. Unclaimed paths are not stamped, so no cache invalidation is
   needed beyond the re-probe.
 - `@olai/ops` `codec.ts`: `match` asks `fileKind(claims.current, path) !== null`.
-  `decode` dispatches through `parserFor`. `byName` through `unkept`. All via
+  `decode` is `parserFor(claims, path)?.parse(path, contents, claims)`, the
+  one `claims` value read at the top of the call. `byName` through `unkept`. All via
   the getter, read per call.
-- `@olai/ops` writer (`ops.ts:668`, `following.ts:138`): serialize and read
-  back through `parserFor(claims, planned.file)`. A planned file whose suffix
-  has no format is a defect refusal, same shape as the existing read-back guard.
+- `@olai/ops` writer (`ops.ts:668`, `following.ts:138`): serialize through
+  `parserFor(claims, planned.file).serialize(nodes)` and read back through
+  `.parse(planned.file, text, claims)`, the same `claims` value the planner was
+  judged against. A planned file whose suffix has no format is a defect
+  refusal, same shape as the existing read-back guard.
 - `@olai/ops` `plan.ts` `outlinePath`: takes `mintExt(claims, "outline")`
   from the row named by `format`; when that row is not claiming, refuse with
   `the olai row is off, so no outline can be created`. Same for
@@ -145,7 +158,8 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 - `chat` (`packages/plugins/chat/src/browser/chat/outline.ts`): the browser
   must not parse. Add a procedure `outlineDiff({ path, oldText, newText })` on
   the VAULT's file surface (`packages/plugins/vault/src/file-surface.ts`),
-  answered through the codec's `parserFor` and `@olai/format`'s `changesOf`.
+  answered with `parserFor(claims, path)?.parse(path, text, claims)` on each
+  side and `@olai/format`'s `changesOf`, `claims` being the vault's current table.
   Chat's browser calls it through the `Wired` client it already holds and draws
   the answer. Nothing in `chat/src/server.ts` or `chat/src/wire.ts` changes:
   another branch (`chat-sidebar-ux`) is rewriting those files, and parsing is
@@ -201,8 +215,12 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   glyph paths out of `files/src/contracts/icons.tsx`. `Image.tsx` currently
   reads `PICTURE_EXTENSIONS`; that list becomes the image row's own.
 - `olai` row under `packages/plugins/olai/`: `src/format.ts` is today's
-  `packages/format/src/parse.ts` + `write.ts` moved verbatim (keep their
-  headers; they are the format's argument). `src/server.ts` registers
+  `packages/format/src/parse.ts` + `write.ts` moved with one change:
+  `parseOutline(file, contents, claims)` takes the third argument and passes
+  it to `outlineDocument`. Keep their headers; they are the format's argument.
+  The module exports `format: OutlineFormat = { parse: parseOutline, serialize: serializeOutline }`,
+  pure, no service in scope. `src/server.ts` is `needs: [FileKinds]` and
+  registers
   `{ kind: "outline", exts: [".olai"], holds: "nodes", kept: true, fetched: false, noun: "outline", article: "an", format }`.
   No browser half. `@olai/format`'s tests that exercised `parseOutline` and
   `serializeOutline` move with them or import the row's pure module (a static
