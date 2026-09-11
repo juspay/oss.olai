@@ -174,15 +174,24 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   `chat/src/browser/chat/ToolFrame.tsx`, `outlines/src/browser/Nothing.tsx`, `trash/src/Entry.tsx`.
 - `files` owns location `files.kinds`, contribution
   `{ kind, glyph: () => JSX.Element, noun, article, testid }`, keyed by kind.
-  `Files.tsx`, `Rail.tsx` and `fileTree.ts` read it. A path whose kind has no
-  contribution draws the plain-file glyph and the row name from
-  `claims.byKind.get(kind)?.noun`. `contracts/icons.tsx` and `contracts/kinds.ts`
-  are deleted; each glyph moves to its row.
+  `Files.tsx`, `Rail.tsx` and `fileTree.ts` read it. Every path in `heads` is
+  claimed by some row's SERVER half, so the only way a listed path has no glyph
+  contribution is that row's BROWSER half being absent (failed to load, or the
+  tab has not fetched it yet). For that case draw the plain-file glyph and the
+  noun from `claims.byKind.get(kind)?.noun`. A row that is OFF has no files in
+  `heads` at all (ruling 4), so the tree never shows them and needs no "row is
+  off" drawing. `contracts/icons.tsx` and `contracts/kinds.ts` are deleted;
+  each glyph moves to its row.
 - `navigation` owns location `navigation.pages`, contribution
   `{ kind, page: (address) => JSX.Element, edits: boolean }`, keyed by kind.
-  `routes.ts` picks the page by `kindOf(path)`; no contribution mounted draws a
-  page saying which row is off. `markdown/src/browser/document/faces.tsx` is
-  deleted; `DocumentPage.tsx` becomes markdown's own contribution.
+  `routes.ts` picks the page by `kindOf(path)`. A path the directory does not
+  hold (its row is off, or nobody ever claimed the suffix) is the existing
+  "the directory holds nothing by that name" page, which now carries the kind
+  string it was asked for. A path that IS held but whose kind has no page
+  contribution mounted (server half claims, browser half absent) draws a page
+  saying which row's browser half is missing. Those are the only two cases.
+  `markdown/src/browser/document/faces.tsx` is deleted; `DocumentPage.tsx`
+  becomes markdown's own contribution.
 - New rows `hypertext`, `csv`, `image`, `pdf` under `packages/plugins/<row>/`:
   `package.json` (`olai-plugin-<row>`, exports `./server`, `./browser`,
   `./testids`), `src/server.ts` (`needs: [FileKinds]`, one `register`),
@@ -231,11 +240,14 @@ and `ops/src/plan.ts` read the same.
   through the registry so a future row inherits it.
 - `packages/bundle/src/fence.test.ts`: the tenancy claims must still hold; the
   new rows import only `@olai/plugin-api`, `@olai/format` and their own package.
-- e2e (`packages/tests/features/`): a vault served with `olai` off shows
-  outlines as unclaimed and the trash page saying so; turning it on restores
-  them without reload; a file `notes.org` is not listed; `pdf` off leaves the
-  file in the tree with a page saying which row is off; `outlines_create` with
-  `olai` off refuses naming the row; two `Trash.*` files produce the finding.
+- e2e (`packages/tests/features/`): a vault served with `olai` off lists no
+  outlines in the tree, `/trash` and the inbox say the row is off, and an
+  outline's address is the "nothing by that name" page; turning it on restores
+  them without reload; a file `notes.org` is never listed; `pdf` off removes
+  `.pdf` files from the tree and `/media/` refuses them, and turning it on
+  lists them again (ruling 4 applies to every kind row alike: a claimless file
+  is not in the set); `outlines_create` with `olai` off refuses naming the
+  row; two `Trash.*` files produce the finding.
   Step definitions `outline_list_steps.ts` and `viewer_steps.ts` referenced
   `files`'s per-kind test ids; point them at each row's `testids.ts`.
 - `just typecheck-fast-remote`, `just test-fast-remote`, `just e2e-fast-remote`
