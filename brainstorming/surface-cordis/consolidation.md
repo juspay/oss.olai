@@ -322,26 +322,30 @@ Open the pair after the first reviewable extraction and link them in both direct
 
 | Phase | Kolu draft | Olai draft | Exit evidence |
 |---|---|---|---|
-| **1. Bridge** | Extract `effect-cordis`, its loader, engine pin integration and assumption tests | Repin, replace bridge imports, remove the local implementation and update ownership fences | Reproducible dependency hydration; bridge tests and Olai lifecycle tests pass |
+| **1. Bridge** | Extract `effect-cordis`, loader, engine hydration and assumption tests; register packages/dependencies in the generated consumer closure | Repin and add consumer seeds; repoint the runtime contract exports, remove the local implementation and update fences | Clean dev/build hydration, dependency checks, bridge tests and Olai lifecycle tests pass |
 | **2. Server recipe** | Add owned Surface composition, listener and configuration worker; server entry point; counter fixture | Use the recipe for boot, configuration, transport admission and shutdown; retain app policy/storage | Counter works headless and in-process; configuration, ownership, shutdown and self-disposal tests pass |
 | **3. Browser and adapters** | Add disposable browser host, generated bundle integration and transport plugins | Consume browser recipe and adapters; keep renderer/shell/content as plugins; remove duplicated orchestration | Browser graph excludes server imports; web counter, reconnect, two-instance isolation and existing Olai workflows pass |
-| **4. Complete app proof** | Build the job board from public package exports and exercise §6 | Close integration gaps against the same Kolu revision | Job-board lifetime/configuration scenarios and Olai behavior pass; APIs demonstrated by consumers |
+| **4. Complete app proof** | Build the job board using package names through public exports, with import-closure checks, and exercise §6 | Close integration gaps against the same Kolu revision | Job-board lifetime/configuration scenarios and Olai behavior pass; APIs demonstrated by consumers |
 | **5. Final review** | Complete reviews, docs, formatting and required full CI | Repin to final reviewed Kolu HEAD, complete reviews and required full CI | Exact commit pair recorded; both branches current, conflict-free and ready for human review |
 
-Migrate Olai in each phase. One implementation owns each extracted capability; avoid compatibility shims or a parallel framework that the real app does not use. Keep the exact Cordis source pin and required hydration/patch behavior through Kolu's existing npins/pnpm conventions. The bridge owns private-engine assumptions and their tests.
+Migrate Olai in each phase. One implementation owns each extracted capability; avoid compatibility shims or a parallel framework that the real app does not use. Keep the exact Cordis source pin and required hydration/patch behavior through Kolu's existing npins/pnpm conventions. The bridge owns private-engine assumptions and their tests. Olai's runtime contract exports can re-export the shared implementation; that is its public interface, not a duplicate compatibility implementation.
+
+Phase 1 includes the actual delivery path: Kolu's generated `nix/consumer-closure.json` must describe the new packages and their external/pinned dependencies; Olai adds seeds through `nix/kolu.nix`. Required pinned sources use the existing revision-checked consumer protocol. Kolu owns Cordis preparation for both development and Nix builds; remove Olai's duplicate preparation/check path once the shared path covers it. Verify every required engine package and transformation reaches the consumer—copying a raw upstream directory is not sufficient evidence. Dependency checks must detect drift, and pin mismatch must fail evaluation.
+
+Assign one implementation owner per repository and one coordinator for checkpoints and the tested-pair record. The owners run their repository's checks and address review findings; the coordinator verifies the pair; the human owns both merges.
 
 ### Pin and validation discipline
 
 ```text
-change Kolu → commit/push → repin Olai to that exact SHA + hashes
+checkpoint → commit/push Kolu → repin Olai to that exact SHA + hashes
             → validate the consumer → record the tested pair
 
 review changes Kolu again → previous Olai evidence is stale → repeat
 ```
 
-Use immutable source pins, not a branch URL or a local workspace link as delivery evidence. Keep both branches based on current upstream master; rerun affected checks after rebases or integration fixes. Final readiness requires full repository-prescribed CI for both final heads, including required platform coverage, plus visible evidence for browser behavior. A green counter alone does not establish Olai compatibility.
+Publish the draft branch in `juspay/kolu`. Track that branch during development, but pin each checkpoint to its verified immutable SHA and hashes; a moving branch URL or local workspace link is not delivery evidence. Record checkpoint commit ranges and tested `(Kolu SHA, Olai SHA, checks)` pairs in the PR bodies. Repin at checkpoints and integration/API fixes rather than every work-in-progress commit; evidence for an older pair never establishes readiness of a newer one. Keep both branches based on current upstream master; rerun affected checks after rebases or integration fixes. Final readiness requires full repository-prescribed CI for both final heads, including required platform coverage, plus visible evidence for browser behavior. Run relevant unit, typecheck and Nix checks for checkpoint changes on the required platforms; final full CI covers both repositories. A green counter alone does not establish Olai compatibility.
 
-The pair adds the new Cordis packages while preserving existing Surface public APIs and behavior. Any required change to those existing contracts must satisfy Kolu's corresponding-consumer rules; the Olai PR does not substitute for a required Drishti PR. Such a dependency changes the delivery scope and must be resolved before calling this two-PR pair ready.
+The pair adds the new Cordis packages while preserving existing Surface public APIs and behavior. Extend the shared Nix consumer closure additively; preserve the `seeds`/`pinnedSources` interface and existing consumers' behavior. Any required change to those existing contracts must satisfy Kolu's corresponding-consumer rules; the Olai PR does not substitute for a required Drishti PR. Such a dependency changes the delivery scope and must be resolved before calling this two-PR pair ready.
 
 ### Human merge gate
 
@@ -349,7 +353,7 @@ Both PRs remain unmerged until the human is satisfied with the design, implement
 
 1. Present the two PR links, tested commit pair, CI results, demonstrations and any remaining limitations.
 2. The human merges **Kolu first**.
-3. Verify the Olai pin resolves to the accepted Kolu implementation. If the merge rebased or squashed it, update the still-open Olai PR to the resulting Kolu commit and hashes, then rerun its required validation. Do not treat pre-merge evidence as proof for a different source revision.
+3. Repin the still-open Olai PR to the resulting accepted Kolu commit and hashes, with its tracked branch restored to `master`. Treat squash/rebase as the normal case requiring a new tested pair. Run Olai dependency checks and required full CI against that pin; record the results before proceeding. Do not treat pre-merge evidence as proof for a different source revision.
 4. The human merges **Olai** after its final pin and checks are satisfactory.
 
 Neither PR is merged at an intermediate phase. Pin adjustments and integration fixes stay in these same two PRs.

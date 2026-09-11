@@ -85,4 +85,6 @@ Phase 1, olai column: "remove the local implementation and update ownership fenc
 
 ## 4. Disposition
 
-§7 is accepted as the delivery plan with 3.1-3.9 folded; 3.1 and 3.4 are the two that change what an implementer does on day one. No PR is to be opened from this review. Standing down.
+§7 is accepted as the delivery plan with 3.1-3.9 folded; 3.1 and 3.4 are the two that change what an implementer does on day one. No PR is to be opened from this review.
+
+Folded by the coordinator: consumer-closure, hydration and check gates in phase 1; runtime-door re-exports allowed; same-repo draft branch with immutable checkpoint pins; tested pairs in the PR bodies; the post-merge master repin and full olai checks as the normal path; two-platform coverage; additive consumer interface; repo owners and coordinator roles; public-export demo. Two scope choices I accept: the graft package layout is kept as an implementation proof rather than prescribing one raw cordis source, so the consumer delivery must carry every required engine package (`cordis`, `@cordisjs/plugin-loader`, `plugin-include`, `plugin-group`) and its transformations; and no unverified npins command syntax and no blanket per-phase gauntlet mandate were added. Both drafts remain human-merge only. Review closed.
