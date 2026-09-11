@@ -181,9 +181,10 @@ Read-only host observations are declared `HostReports` (server) and `HostTab` (b
 needs: [HostTab, board]
 // apply acquires both through Effect and contributes its scoped view.
 
-// Authorized app procedure delegates to the host-owned operation:
-set: ({ input }) => control.flip(input.name, input.enabled)
-// HostControl.flip forks into hostScope; the request only joins it.
+// Separately authorized app procedures delegate to host-owned operations:
+set: ({ input }) => control.flip(input.name, input.enabled),
+configure: ({ input }) => control.configure(input.name, input.key, input.value),
+// Both operations fork into hostScope; the request only joins them.
 // Both configuration edits and enablement transitions outlive their request.
 // Their authorization and persistence policy are separate app decisions.
 ```
