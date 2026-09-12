@@ -59,7 +59,6 @@ read its `docs/org2-poc.md` for the list, then close it.
 ```ts
 // packages/plugin-api/src/services.ts, beside VaultViews
 export interface FileClaim {
-  readonly kind: string                       // "outline", "document", "image" …
   readonly exts: readonly [string, ...string[]] // matched exactly, first is what a mint writes
   readonly holds: "nodes" | "text" | "bytes"
   readonly kept: boolean
@@ -68,15 +67,28 @@ export interface FileClaim {
   readonly article: "a" | "an"
   readonly format?: OutlineFormat             // required iff holds === "nodes"
 }
+/** What the table holds: the claim plus WHO made it, stamped by the registry
+ *  off the registering fiber's binding (`moduleOwner`), never supplied by the
+ *  row. `kind` IS the row id. One row, one claim. */
+export interface ComposedClaim extends FileClaim { readonly kind: string }
 export interface FileKinds {
-  readonly current: () => ReadonlyMap<string, FileClaim>   // by kind
+  readonly current: () => ReadonlyMap<string, ComposedClaim>   // by kind, i.e. by row id
   readonly changes: Stream.Stream<void>
-  /** Claim, for as long as the calling plugin is loaded. A suffix or kind
-   *  already claimed FAILS the calling fiber (the `Kinds.register` rule). */
+  /** Claim, for as long as the calling plugin is loaded. Checked and installed
+   *  in one synchronous step over every suffix of the claim: a suffix already
+   *  claimed, a suffix that ends in one already claimed, or a second claim
+   *  from the same row FAILS the calling fiber and installs nothing; its
+   *  finalizer removes only what this call installed. */
   readonly register: (claim: FileClaim) => Effect.Effect<void, never, Scope.Scope>
 }
 export const FileKinds = serviceTag<FileKinds>("vault.file-kinds")
 ```
+
+Consequence for readers: nothing compares a kind to the string `"outline"` or
+`"document"` any more. Outline-ness is `holds === "nodes"`; a document is
+whatever the `markdown` row claims. Glyph and page lookups are keyed by the row
+id the registry stamped. This is what keeps a second outline row (`org`) from
+needing a word core knows.
 
 `OutlineFormat` lives in `@olai/format` (`packages/format/src/format.ts`):
 
@@ -144,17 +156,24 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   `.parse(planned.file, text, claims)`, the same `claims` value the planner was
   judged against. A planned file whose suffix has no format is a defect
   refusal, same shape as the existing read-back guard.
-- `@olai/ops` `plan.ts` `outlinePath`: takes `mintExt(claims, "outline")`
-  from the row named by `format`; when that row is not claiming, refuse with
-  `the olai row is off, so no outline can be created`. Same for
-  `markdown_create` via `mintExt(claims, "document")`.
+- `@olai/ops` `plan.ts` `outlinePath`: takes `mintExt(claims, config.format)`,
+  the row id the vault's `format` config names, and checks that claim
+  `holds === "nodes"`; when that row is not claiming, refuse with
+  `the olai row is off, so no outline can be created`. `markdown_create` mints
+  through `mintExt(claims, "markdown")`: the markdown row's own verb may name
+  its own row id, since it is the one thing that row knows about itself.
 - `@olai/format` `node.ts` conventions: `TRASH`, `INBOX`, `PINS`, `PROPERTIES`
   become stems; `outlineCalled(files, stem)` matches by `stemOf` over
   `holds: nodes` files. `TRASH_FILE` and `isTrashed` take claims. The
   `ambiguous-convention` finding lives in `rules.ts`.
 - `git` (`packages/plugins/git/src/ledger/committed.ts:274`): parse the
   committed side through the format for that path, reached through `Ops`
-  (`Ops` gains `parserFor`). `pending.ts` and `pending.testlib.ts` follow.
+  (`Ops` gains `parserFor`). Git's server half adds `Ops` to its `needs`; it
+  already needs `Vault`, and vault needs nothing of git, so no cycle. The
+  ledger it registers into `VaultViews` is unchanged. `pending.ts` and
+  `pending.testlib.ts` follow. Git must not import the `olai` row's module for
+  the parser: that would parse a committed `.org` with the JSONL reader the day
+  an org row exists.
 - `chat` (`packages/plugins/chat/src/browser/chat/outline.ts`): the browser
   must not parse. Add a procedure `outlineDiff({ path, oldText, newText })` on
   the VAULT's file surface (`packages/plugins/vault/src/file-surface.ts`),
@@ -209,8 +228,10 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 - New rows `hypertext`, `csv`, `image`, `pdf` under `packages/plugins/<row>/`:
   `package.json` (`olai-plugin-<row>`, exports `./server`, `./browser`,
   `./testids`), `src/server.ts` (`needs: [FileKinds]`, one `register`),
-  `src/browser.tsx` (`needs: [Offers, fileState-ish]`, contributes to
-  `files.kinds` and `navigation.pages`), `src/testids.ts`. Move the faces out of
+  `src/browser.tsx` with TWO components, `glyph` (`needs: [files.kinds]`) and
+  `page` (`needs: [navigation.pages, vault.files]`), so the files row being off
+  costs the kind its glyph and nothing else, and navigation being off costs it
+  its page and nothing else. Neither component needs the other. `src/testids.ts`. Move the faces out of
   `markdown/src/browser/document/` (`Hypertext`, `Csv`, `Image`, `Pdf`) and the
   glyph paths out of `files/src/contracts/icons.tsx`. `Image.tsx` currently
   reads `PICTURE_EXTENSIONS`; that list becomes the image row's own.
@@ -221,7 +242,8 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   The module exports `format: OutlineFormat = { parse: parseOutline, serialize: serializeOutline }`,
   pure, no service in scope. `src/server.ts` is `needs: [FileKinds]` and
   registers
-  `{ kind: "outline", exts: [".olai"], holds: "nodes", kept: true, fetched: false, noun: "outline", article: "an", format }`.
+  `{ exts: [".olai"], holds: "nodes", kept: true, fetched: false, noun: "outline", article: "an", format }`;
+  the registry stamps `kind: "olai"`.
   No browser half. `@olai/format`'s tests that exercised `parseOutline` and
   `serializeOutline` move with them or import the row's pure module (a static
   import of pure functions is allowed by `cordis.md`).
@@ -243,6 +265,41 @@ and `ops/src/plan.ts` read the same.
 `FileKind` the schema (`Schema.Literals`) becomes `Schema.String`. `BodyKind`,
 `NodeKind`, `TextKind`, `UnkeptKind`, `UNKEPT_KINDS` are deleted. `page.ts`'s
 "the directory holds nothing by that name" reading carries the kind string.
+
+**Wire schemas validate shape, not membership** (`address.ts`). `DocumentPath`
+and `AtOutline` today filter on the static table at decode time. A schema is
+static and the table is live, so the filter cannot stay there, and a
+per-surface schema rebuilt from the current claims is rejected: a schema that
+changes meaning while a subscription is open is exactly the drift the wire's
+"reconnect is a fresh snapshot" rule exists to avoid. Ruled:
+
+- `DocumentPath` is a relative path with `/` separators, no `..` segment, no
+  leading `/`, non-empty. Nothing about suffixes. `AtOutline` is `AtDocument`
+  with its existing `kind: "outline"` address discriminator (an ADDRESS shape,
+  not a file kind; leave the wire vocabulary alone) and no filter; the brand
+  says what the caller CLAIMS, not what the directory holds. `outlineAt`
+  admits it when the claim for its path `holds === "nodes"`.
+- Membership is decided where the table is: `claimedOf(claims, path)` and
+  `outlineAt(claims, at)` in `address.ts`, returning the branded value or
+  `null`, are the only constructors ops and the vault use to admit a path off
+  the wire.
+- The refusal moves one step later and says more. Every procedure and tool
+  that took a `DocumentPath` (`markdown_read`, `markdown_write`,
+  `outlines_subtree`'s file arm, `outlines_create`, `outlines_move`'s `file`,
+  `edit-intents`'s file verbs, `search_nodes`'s file filter) refuses in
+  `ops/src/refusals.ts`'s existing `notFound` shape with the sentence
+  `` `notes.org` is not a file this directory serves: no row claims `.org` ``,
+  or, for a suffix a row claims but the row is off,
+  `` `plan.olai` is an outline, and the `olai` row is off ``. The `didYouMean`
+  neighbour list is unchanged. Where a verb needs an outline specifically
+  (`outlines_create` on a `.md`), the refusal is
+  `` `notes.md` is a document; this verb takes an outline ``.
+- The MCP tool schemas advertise `DocumentPath` as a plain relative path; the
+  tool description says which kinds the verb accepts, in words.
+- e2e: the scenario that typed an unclaimed suffix into the new-file box or a
+  tool and expected a schema decode failure now expects the `notFound`
+  sentence above. Check `packages/tests/features/` for `is not a field` /
+  `expected a relative path` assertions and retarget them.
 
 ## Tests
 
@@ -299,6 +356,29 @@ and `ops/src/plan.ts` read the same.
 8. Tests, then docs, then `just ci`.
 
 Commit after each step. Each step should leave `just typecheck-fast-remote` green.
+
+## Cordis checklist
+
+Each line is a guarantee, where it is enforced, and the test that shows it.
+Reviewers read this list against the diff; a line without its test is not done.
+
+| Guarantee | Enforced in | Evidence |
+|---|---|---|
+| A claim has one owner, stamped by the registry, never by the row | `openViews()`'s file-kind table, `kind` from `moduleOwner` | unit: a row passing `kind` is ignored; two rows claiming `.x` fails the second fiber, first keeps its files |
+| A refused claim installs nothing and its cleanup deletes nothing of the winner's | one synchronous check-then-install over all exts | unit: image row claiming nine suffixes where one is taken leaves all nine unclaimed |
+| A departed row's files leave the set | `register`'s finalizer, then `vault-revalidation` on `changes` | e2e: toggle `pdf`, `heads` loses the paths, `/media/` refuses; toggle on, they return |
+| A probe in flight during withdrawal cannot pin the old table | codec reads `claims.current` at the top of each `match`/`decode` call, never caches | unit: withdraw between two probes, second probe drops the files |
+| The reading published was validated with the table in force | `Reading` carries the `Claims` value it was validated with, not the getter | unit: reading's `claims` is a snapshot; toggling a row does not mutate a published reading |
+| No format reads the registry it is registered into | `OutlineFormat.parse(file, contents, claims)` | fence: `packages/plugins/olai` imports no `FileKinds` outside `server.ts` |
+| Git and chat never parse through the wrong format | git via `Ops.parserFor`; chat via the vault's `outlineDiff` procedure | fence: neither package imports `olai-plugin-olai` |
+| Chat's diff survives the vault being absent | chat's browser holds the vault client through `Wired`; absent client draws "unreadable", never throws | browser test: vault client revoked, diff draws the absent sentence |
+| Browser claims never go stale across a reconnect | `vault.files.claims` is a cell; reconnect resubscribes and takes a fresh snapshot; no consumer caches it | browser test: retire the wire, republish claims, tree redraws |
+| A kind row's browser half degrades per component | `glyph` and `page` are separate components | e2e: files off, pdf page still opens; navigation off, pdf glyph still drawn |
+| Withdrawing a face releases what it acquired | contributions to `files.kinds` and `navigation.pages` are scoped to the component activation | existing `Faces` withdrawal tests, extended to both locations |
+| A mint whose row is off refuses, nothing written | `outlinePath` and `markdown_create` ask `mintExt` and refuse before staging | e2e: `outlines_create` with `olai` off |
+| No default table a forgetting caller silently gets | `codecFor(kinds, claims)` has no default; `NO_CLAIMS` is a test-only export | typecheck |
+| Two hosts in one process do not share a claim table | table minted inside `vault-setup`'s `apply`, like `openViews()` | existing two-host test in `views.test.ts`, extended |
+| Only the claiming row spells its suffix | `packages/tests/kinds.test.ts` | the sweep |
 
 ## What not to do
 
