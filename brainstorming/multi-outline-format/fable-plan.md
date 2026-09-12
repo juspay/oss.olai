@@ -208,13 +208,30 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   answered with `parserFor(claims, path)?.parse(path, text, claims)` on each
   side and `@olai/format`'s `changesOf`, `claims` being the vault's current table.
   Chat's browser calls it through the `Wired` client it already holds and draws
-  the answer. Nothing in `chat/src/server.ts` or `chat/src/wire.ts` changes:
-  another branch (`chat-sidebar-ux`) is rewriting those files, and parsing is
-  the vault's business anyway.
-- `kolu/src/wake.ts` and `odu/src/wake.ts`: `wake.kinds` was typed `NodeKind`.
-  It becomes `ReadonlyArray<string>` checked at wake time against
-  `claims.current` (`holds === "nodes"`), refused in words otherwise. Keep the
-  screenshot defect (2026-09-01) in the test.
+  the answer. For parsing, nothing in `chat/src/server.ts` or `chat/src/wire.ts`
+  changes: another branch (`chat-sidebar-ux`) is rewriting those files, and
+  parsing is the vault's business anyway. The ONE permitted touch of
+  `chat/src/server.ts` is the doorbell's `World` (next item).
+- `kolu/src/wake.ts`, `odu/src/wake.ts`, and the doorbell check
+  (`chat/src/server/doorbell.ts`'s `faultedIn`, `@olai/surface`'s `watchable`,
+  the browser picker that filters by the same reading): `wake.kinds` was a
+  list of kind NAMES typed `NodeKind`, and a kind name is now a row id, which
+  a doorbell has no business naming. What kolu and odu mean is "files whose
+  records I can walk". So the declaration is renamed to what it means:
+  `wake.walks: "nodes"` (the `holds` value the doorbell can be pointed at;
+  `"text"` is legal for a plugin that reads prose, as the `NodeKind` docstring
+  allowed). `watchable(claims, wake, file)` is `fileKind(claims, file)` having a
+  claim whose `holds === wake.walks`; both ends, serve and picker, ask the same
+  predicate of their own claims (server getter, browser cell). The judgement
+  belongs to whoever holds the reading, and the reading now carries its
+  `claims`, so the doorbell's `World` in `chat/src/server.ts` gains one field,
+  `claims: snapshot.value.claims`, threaded through `faultedIn` to `watchable`.
+  Ruled: that one-line addition at the call site is allowed; a checker that
+  fetched claims for itself from `Ops` or a service would be a hidden
+  dependency, and the small merge conflict with `chat-sidebar-ux` is resolved
+  by whichever branch lands second. Keep the screenshot defect (2026-09-01)
+  in the test: a doorbell declaring `walks: "text"` must not be offered outline
+  files, and one declaring `"nodes"` must not be offered a document.
 - `packages/plugins/vault/src/http/media.ts`: `isAsset` asks `isFetched(claims, path)`.
 - `packages/surface/src/seal.ts` interpolates `FILE_EXTS` into the sealed
   frame's script. It becomes a parameter; the caller (`markdown`'s hypertext
@@ -419,7 +436,8 @@ step's last commit must be green under `just typecheck-fast-remote` and
    `Claims`; `FILE_KINDS`, `FileKind` the union and its derivatives are
    deleted in the same step. Codec, ops writer and mints, conventions by stem
    and the `ambiguous-convention` finding, `address.ts` seam and the ops
-   refusals, media route, `seal.ts` parameter, `wake.kinds`, git via `Ops`,
+   refusals, media route, `seal.ts` parameter, `wake.walks` and the doorbell
+   `World`, git via `Ops`,
    chat via the vault's `outlineDiff`, and every browser caller via
    `vault.files.kindOf`. `parseOutline` and `serializeOutline` move into the
    olai row here (the row's `format` now points at its own module). Typecheck
