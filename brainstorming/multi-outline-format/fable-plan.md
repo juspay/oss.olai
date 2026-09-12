@@ -306,7 +306,12 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   `src/browser.tsx` with TWO components, `glyph` (`needs: [files.kinds]`) and,
   for csv, a `page` that reads its body through `vault.files.body` rather than
   markdown's collection, and
-  `page` (`needs: [navigation.pages, vault.files]`). Neither component needs
+  `page` (`needs: [navigation.pages, vault.files]` as the floor). Ruled, and
+  general: a moved face keeps every service it already named, declared on the
+  `page` component and nowhere wider; the list above is the floor, not a cap.
+  So hypertext's page also declares `navigation.file-links`, exactly as the
+  face did inside markdown, and a reviewer compares the moved face's needs
+  against what it named before the move. Neither component needs
   the other. What that buys is exactly this: files being off costs the kind
   its glyph and nothing else, so its page still opens. Navigation being off
   costs it its page, and, as today, the tree and rail go with navigation
