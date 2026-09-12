@@ -17,7 +17,7 @@ the vault's media route reads the table's `fetched` column. After this PR:
 | `olai` | new | `.olai`, `holds: nodes`, JSONL `parse` and `serialize` | nothing |
 | `markdown` | existing | `.md`, `holds: text`, `kept` | document face, editor, glyph, noun |
 | `hypertext` | new | `.html`, `text`, unkept, fetched | sealed-frame face, glyph, noun |
-| `csv` | new | `.csv`, `text`, unkept | table face, glyph, noun |
+| `csv` | new | `.csv`, `text`, unkept | table face over `vault.files.body`, glyph, noun |
 | `image` | new | nine picture suffixes, `bytes`, fetched | `<img>` face, glyph, noun |
 | `pdf` | new | `.pdf`, `bytes`, fetched | `<object>` face, glyph, noun |
 
@@ -258,7 +258,17 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 
 - `vault.files` (`packages/plugins/vault/src/browser/state.ts`, contract
   `contract.ts`) gains `outlineDiff(path, oldText, newText)`, a method over the
-  vault's own wire procedure, and `claims: Accessor<Claims>` fed by a new `file-kinds`
+  vault's own wire procedure; `body(path)`, the read of an UNKEPT text file's
+  bytes when somebody opens it, over a new `bodies.get` procedure on the
+  vault's file surface that refuses any path whose claim is not
+  `holds: "text"` and unkept (a kept body rides its own row's collection, a
+  fetched kind rides `/media/`). Ruled: this is the vault's read, not
+  markdown's. `markdown/src/server/bodies.ts` moves into the vault's server
+  half unchanged in behaviour (read then and there, kept by nobody, refusal on
+  the entry), markdown's `documents` collection narrows to `.md`, and the csv
+  page reads `vault.files.body`. Serving csv through `/media/` was rejected:
+  `documents.ts` argues against handing data to a previewed page, and that
+  argument stands. Also `claims: Accessor<Claims>` fed by a new `file-kinds`
   cell on the vault surface, and `kindOf(path)`. The cell carries the table
   minus `format`, plus `outlineRow: string`, the id the vault's `format`
   config names. A page that wants to say `the olai row is off` checks
@@ -293,7 +303,9 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 - New rows `hypertext`, `csv`, `image`, `pdf` under `packages/plugins/<row>/`:
   `package.json` (`olai-plugin-<row>`, exports `./server`, `./browser`,
   `./testids`), `src/server.ts` (`needs: [FileKinds]`, one `register`),
-  `src/browser.tsx` with TWO components, `glyph` (`needs: [files.kinds]`) and
+  `src/browser.tsx` with TWO components, `glyph` (`needs: [files.kinds]`) and,
+  for csv, a `page` that reads its body through `vault.files.body` rather than
+  markdown's collection, and
   `page` (`needs: [navigation.pages, vault.files]`). Neither component needs
   the other. What that buys is exactly this: files being off costs the kind
   its glyph and nothing else, so its page still opens. Navigation being off
