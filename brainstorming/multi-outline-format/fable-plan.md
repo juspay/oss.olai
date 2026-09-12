@@ -262,9 +262,14 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   `package.json` (`olai-plugin-<row>`, exports `./server`, `./browser`,
   `./testids`), `src/server.ts` (`needs: [FileKinds]`, one `register`),
   `src/browser.tsx` with TWO components, `glyph` (`needs: [files.kinds]`) and
-  `page` (`needs: [navigation.pages, vault.files]`), so the files row being off
-  costs the kind its glyph and nothing else, and navigation being off costs it
-  its page and nothing else. Neither component needs the other. `src/testids.ts`. Move the faces out of
+  `page` (`needs: [navigation.pages, vault.files]`). Neither component needs
+  the other. What that buys is exactly this: files being off costs the kind
+  its glyph and nothing else, so its page still opens. Navigation being off
+  costs it its page, and, as today, the tree and rail go with navigation
+  (`files.sidebar` needs `navigation.state`), so the glyph contribution then
+  stands unread. That is the same shape as today and is NOT widened here: a
+  tree standing without navigation would need a row press that goes nowhere,
+  which is a navigation design question, not a file-kind one. `src/testids.ts`. Move the faces out of
   `markdown/src/browser/document/` (`Hypertext`, `Csv`, `Image`, `Pdf`) and the
   glyph paths out of `files/src/contracts/icons.tsx`. `Image.tsx` currently
   reads `PICTURE_EXTENSIONS`; that list becomes the image row's own.
@@ -445,7 +450,7 @@ Reviewers read this list against the diff; a line without its test is not done.
 | Git and chat never parse through the wrong format | git via `Ops.parserFor`; chat via the vault's `outlineDiff` procedure | fence: neither package imports `olai-plugin-olai` |
 | Chat's diff survives the vault being absent | chat's browser holds the vault client through `Wired`; absent client draws "unreadable", never throws | browser test: vault client revoked, diff draws the absent sentence |
 | Browser claims never go stale across a reconnect | `vault.files.claims` is a cell; reconnect resubscribes and takes a fresh snapshot; no consumer caches it | browser test: retire the wire, republish claims, tree redraws |
-| A kind row's browser half degrades per component | `glyph` and `page` are separate components | e2e: files off, pdf page still opens; navigation off, pdf glyph still drawn |
+| A kind row's browser half degrades per component | `glyph` and `page` are separate components | e2e: files off, pdf page still opens at its address; navigation off, tree and rail withdraw as today and the pdf row's `glyph` component stays mounted without error (unit: contribution present, nothing reads it); files back on, glyph drawn without a reload |
 | Withdrawing a face releases what it acquired | contributions to `files.kinds` and `navigation.pages` are scoped to the component activation | existing `Faces` withdrawal tests, extended to both locations |
 | A mint whose row is off refuses, nothing written | `outlinePath` and `markdown_create` ask `mintExt` and refuse before staging | e2e: `outlines_create` with `olai` off |
 | No default table a forgetting caller silently gets | `codecFor(kinds, claims)` has no default; `NO_CLAIMS` is a test-only export | typecheck |
