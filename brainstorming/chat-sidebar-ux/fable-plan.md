@@ -30,7 +30,7 @@ Keep these boundaries exactly. Every value that crosses a package boundary at ru
 
 | Thing | Owner | How others reach it |
 |---|---|---|
-| Slot names `outline.row.aside`, `outline.row.fold`, `outline.page.head`, `outline.page.foot` | `olai-plugin-outlines` (`src/slots.ts`) | `slots.register(...)` from chat |
+| Slot names `outline.row.aside`, `outline.row.fold`, `outline.page.head`, `outline.page.foot`, and the kind-keyed `outline.row.placement` | `olai-plugin-outlines` (`src/slots.ts`) | `slots.register(...)` from chat |
 | Which folds are open in this tab | `olai-plugin-chat` browser, one module beside `browser/agents/showing.ts` | not shared; the fold face reads it |
 | A conversation's transcript, state, saying | server, one subscription per `Conversing` per tab | keyed wire cells/collections (§5.2) |
 | Which conversations this tab is reading, and their liveness hold | chat server (`scoped.ts` scheduler) | acquired by subscribing, released by unsubscribing |
@@ -66,6 +66,7 @@ Commit after each numbered item; run `just typecheck-fast-remote` after 5.1 to 5
 - `outline.row.fold`: same face, drawn by `NodeBody.tsx` on an ordinary row between the `PluginDoors` site (`:200`) and the note line. This is where the unfolded conversation lands.
 - `outline.page.head`: same face, drawn by `NodePage.tsx` under the title line and above the zoomed subject's `NodeBody` (the drawer at `NodePage.tsx:181` belongs to that `NodeBody`, so this is the only mount point between title and drawer). The zoomed agent line lands here.
 - `outline.page.foot`: same face, drawn by `NodePage.tsx` after the children `Tree`. The zoomed conversation and composer land here.
+- `outline.row.placement`: face `{readonly inRows: boolean}`, `keyedBy: "kind"` like `outline.row.chip`. A property kind's one word about where its ordinary chip is drawn. Read by the outlines row when it builds `customEntries` (row view): a kind whose placement says `inRows: false` is left out of the run there, and nothing else changes; `drawerEntries` (the zoomed page) ignores placement and draws every property as today. No filler ever replaces or redraws the ordinary chip; outlines keeps the only renderer. Absent contribution means `inRows: true`, so every existing kind is unaffected.
 
 Register the four in `docs/plugins/chat.md`'s seat table (`## Where it hangs in the tab`) with "who declares it" and "what chat brings". Unit test the slot table the way the existing names are tested.
 
@@ -99,9 +100,9 @@ e2e (`node_agents.feature`): rewrite "stands on both its faces" scenarios so the
 
 ### 5.4 The property chip is not drawn in outline view
 
-Register `outline.row.chip` keyed by the session kind (see `browser/live/dressings.ts:65-67` in outlines for how kind-keyed chips are read). In row view the chip draws nothing; in the zoomed drawer (`drawerEntries`) it draws the ordinary chip with the value clamped to `max-w-[min(22rem,100%)] truncate` (the existing long-door treatment in `PropsDrawer.tsx`). Editing the property by hand stays possible on the zoomed page; document that in `docs/chat.md` where "Re-pointing a bound node by hand is still an edit to the property" is said.
+Register `outline.row.placement` keyed by the session kind with `{inRows: false}` (5.1). That is the whole contribution: the outlines row omits the kind from `customEntries`, so a bound row draws no session chip in outline view, while the zoomed page's `drawerEntries` draws the ordinary chip exactly as today, with the value clamped by the existing long-door treatment in `PropsDrawer.tsx` (`max-w-[min(22rem,100%)] truncate`). Do not register `outline.row.chip` for this kind, and do not add a replacement mode, a placement context, or an exported chip renderer to the chip slot; the ordinary chip stays outlines' own. Editing the property by hand stays possible on the zoomed page; document that in `docs/chat.md` where "Re-pointing a bound node by hand is still an edit to the property" is said, and say that the chip is drawn on the page only.
 
-e2e: a bound row draws no property chip in the outline; the zoomed page draws it; `node_agent_mutations.feature` keeps proving that editing the chip re-points the agent.
+e2e: a bound row draws no property chip in the outline while its other custom properties still draw; the zoomed page draws it; a kind with no placement contribution draws in rows as before; `node_agent_mutations.feature` keeps proving that editing the chip on the page re-points the agent. Unit: outlines' entry builders honour `inRows: false` in `customEntries` and ignore it in `drawerEntries`.
 
 ### 5.5 The fold
 
