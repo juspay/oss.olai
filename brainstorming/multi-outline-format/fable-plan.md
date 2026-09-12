@@ -48,6 +48,22 @@ read its `docs/org2-poc.md` for the list, then close it.
    read the configured outline row off the `file-kinds` cell (below), say
    `the olai row is off`. No roster lookup and no suffix-to-row table anywhere.
    The plugins panel gets a `switchHint` saying so. Honest beats safe here.
+
+   **Its switch is session-only, like the vault's and the settings reader's.**
+   `_olai/Settings.olai` is itself an outline: a durable `on: no` for the row
+   that claims its suffix would unclaim the file that says so, the reading
+   would fall to defaults, and the row would come back. The host already has
+   the door for exactly this (`packages/server/src/configuration.ts`,
+   `sessionOwners`): a reader owner's `on` in the file is ignored with a
+   warning, its switch is session-only and wears the dashed ring, and applied
+   patches for every other row stand while the reader is withdrawn. Ruled:
+   the set of reader owners gains a third member, DERIVED like the other two
+   and never spelled: the row whose registered claim holds the settings file's
+   suffix, read off `FileKinds.current()` (its `kind` is the row id). Today
+   that is `olai`; with an org row and an `.org` settings file it would be
+   `org`, with no code change. Turning `olai` off therefore loses the settings
+   reading until it is on again, exactly as turning the vault off does, and
+   other rows keep their applied patches meanwhile.
 6. **The `FileKind` closed union goes.** Kind names are strings. The three
    `Record<FileKind, …>` tables in `files/src/contracts/icons.tsx`,
    `files/src/contracts/kinds.ts` and `markdown/src/browser/document/faces.tsx`
@@ -152,6 +168,12 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   after the store opened brings its files in on the next look; one that leaves
   takes them out. Unclaimed paths are not stamped, so no cache invalidation is
   needed beyond the re-probe.
+- Host `followConfiguration` (`packages/server/src/configuration.ts`): the
+  `sessionOwners()` derivation gains the row whose claim holds the selected
+  settings file's suffix, asked of the vault's `FileKinds` service when it is
+  offered (absent vault means no such owner, which is already the case). The
+  existing warning wording (`this reader's switch is session-only so the file
+  cannot disable its own reader`) covers it unchanged.
 - `@olai/ops` `codec.ts`: `match` asks `fileKind(claims.current, path) !== null`.
   `decode` is `parserFor(claims, path)?.parse(path, contents, claims)`, the
   one `claims` value read at the top of the call. `byName` through `unkept`. All via
@@ -260,7 +282,10 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   import of pure functions is allowed by `cordis.md`).
 - `packages/bundle/olai.yml`: new section `Files` holding `olai`, `markdown`,
   `hypertext`, `csv`, `image`, `pdf`, in that order. `olai` carries
-  `profiles: [surface, test-minimal]` like vault and a `switchHint`. Run
+  `profiles: [surface, test-minimal]` like vault and a `switchHint` that says
+  turning it off also withdraws the settings reading until it returns. Its
+  switch is drawn with the session-only ring because the host derives it as a
+  reader owner; nothing in the yml says so. Run
   `bun packages/bundle/generate.ts` (part of `just install`).
 
 ## `@olai/format` internals
@@ -329,8 +354,11 @@ changes meaning while a subscription is open is exactly the drift the wire's
   through the registry so a future row inherits it.
 - `packages/bundle/src/fence.test.ts`: the tenancy claims must still hold; the
   new rows import only `@olai/plugin-api`, `@olai/format` and their own package.
-- e2e (`packages/tests/features/`): a vault served with `olai` off lists no
-  outlines in the tree; `/trash`, the inbox, pins and the agenda say
+- e2e (`packages/tests/features/`): `olai` switched off from the panel
+  (session switch; an `on: no` for it written in `_olai/Settings.olai` is
+  ignored with the reader-owner warning, and that is a scenario too) lists no
+  outlines in the tree, the settings reader reports absent with every other
+  row's applied patch standing; `/trash`, the inbox, pins and the agenda say
   `the olai row is off` (they read the configured outline row off the claims
   cell and find no claim under it); an outline's address is the "nothing by
   that name" page saying `no row claims `.olai``; turning it on restores
