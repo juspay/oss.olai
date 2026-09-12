@@ -14,12 +14,21 @@ the vault's media route reads the table's `fetched` column. After this PR:
 
 | row | status | server half registers | browser half contributes |
 |---|---|---|---|
-| `olai` | new | `.olai`, `holds: nodes`, JSONL `parse` and `serialize` | nothing; `outlines` draws every `holds: nodes` kind |
+| `outline-olai` | new | `.olai`, `holds: nodes`, JSONL `parse` and `serialize` | nothing; `outlines` draws every `holds: nodes` kind |
 | `markdown` | existing | `.md`, `holds: text`, `kept` | document face, editor, glyph, noun |
 | `hypertext` | new | `.html`, `text`, unkept, fetched | sealed-frame face, glyph, noun |
 | `csv` | new | `.csv`, `text`, unkept | table face over `vault.files.body`, glyph, noun |
 | `image` | new | nine picture suffixes, `bytes`, fetched | `<img>` face, glyph, noun |
 | `pdf` | new | `.pdf`, `bytes`, fetched | `<object>` face, glyph, noun |
+
+**Row id ruled by the human after review: `outline-olai`** (package
+`olai-plugin-outline-olai`, docs page `docs/plugins/outline-olai.md`, `format`
+default `"outline-olai"`). A bare `olai` collides with the process-policy
+namespace (`packages/server/src/configuration.ts` registers `olai` for
+`ProcessConfig`, and the `olai` node in `_olai/Settings.olai` is the
+process's) and forced a repo-wide fence exemption for the word. Future format
+rows follow the same shape: `outline-org`. Every `olai` row id below reads as
+`outline-olai`.
 
 `org` is NOT in this PR and no code may mention it. It becomes a row like `olai`
 later. PR #466 is the reference for what an org row will need from the contract;
