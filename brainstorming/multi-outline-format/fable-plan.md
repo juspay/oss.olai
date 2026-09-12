@@ -207,7 +207,11 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   the VAULT's file surface (`packages/plugins/vault/src/file-surface.ts`),
   answered with `parserFor(claims, path)?.parse(path, text, claims)` on each
   side and `@olai/format`'s `changesOf`, `claims` being the vault's current table.
-  Chat's browser calls it through the `Wired` client it already holds and draws
+  Chat's browser reaches it as `outlineDiff` on the `vault.files` service it
+  already declares (`fileAccess`); the vault's browser half calls its own wire
+  procedure behind that method, since `Wired` exposes only the calling row's
+  own surface. With the vault absent the service is absent and chat's
+  reference component is not mounted, which is the existing rule. Chat draws
   the answer. For parsing, nothing in `chat/src/server.ts` or `chat/src/wire.ts`
   changes: another branch (`chat-sidebar-ux`) is rewriting those files, and
   parsing is the vault's business anyway. The ONE permitted touch of
@@ -243,7 +247,8 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 ## Browser plumbing
 
 - `vault.files` (`packages/plugins/vault/src/browser/state.ts`, contract
-  `contract.ts`) gains `claims: Accessor<Claims>` fed by a new `file-kinds`
+  `contract.ts`) gains `outlineDiff(path, oldText, newText)`, a method over the
+  vault's own wire procedure, and `claims: Accessor<Claims>` fed by a new `file-kinds`
   cell on the vault surface, and `kindOf(path)`. The cell carries the table
   minus `format`, plus `outlineRow: string`, the id the vault's `format`
   config names. A page that wants to say `the olai row is off` checks
