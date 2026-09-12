@@ -236,6 +236,21 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   the revision as this half reads", so naming a third field is its own rule;
   do not replace it with the vault's whole `Reading`, which would declare a
   read of everything.
+
+  **Trashed-ness of a message's node** (ruled after review). `isTrashed` now
+  takes `Claims`, and chat's pure prompt builder (`chat/src/context.ts`) holds
+  a `NodeContext`, not a reading. Do NOT thread `Claims` through chat's send
+  path in `server.ts` to re-judge it there: that is more than the two
+  permitted lines, and it would reclassify a historical transcript row
+  against today's registry. Ruled: the judgement is made once, where the
+  reading is, in `chat/src/server/context.ts`'s `nodeContextFor` with
+  `isTrashed(at.claims, file)`, and carried on the wire as an optional
+  `trashed: boolean` on `NodeContext` (`chat/src/wire/members.ts`); the prompt
+  builder reads the flag. Old transcript rows omit it and read as not
+  trashed. This retracts the review's "revert the `trashed` wire field"; the
+  `Attachments.tsx` MIME change stays a revert. `chat/src/wire.ts` (the
+  surface, which `chat-sidebar-ux` rewrites) is still untouched;
+  `wire/members.ts` is a schema file that branch does not edit.
 - `kolu/src/wake.ts`, `odu/src/wake.ts`, and the doorbell check
   (`chat/src/server/doorbell.ts`'s `faultedIn`, `@olai/surface`'s `watchable`,
   the browser picker that filters by the same reading): `wake.kinds` was a
