@@ -244,8 +244,12 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   files, and one declaring `"nodes"` must not be offered a document.
 - `packages/plugins/vault/src/http/media.ts`: `isAsset` asks `isFetched(claims, path)`.
 - `packages/surface/src/seal.ts` interpolates `FILE_EXTS` into the sealed
-  frame's script. It becomes a parameter; the caller (`markdown`'s hypertext
-  face, after the move: the `hypertext` row) passes the current suffix list.
+  frame's script. It becomes a parameter. The caller is the vault's `/media/`
+  handler (`packages/plugins/vault/src/http/media.ts`), which builds the sealed
+  page server-side and passes the suffixes of its current `Claims` at each
+  request; sealing stays vault-owned. The `hypertext` row's browser face only
+  points an iframe at that URL and never calls `seal.ts`; the table row above
+  saying "sealed-frame face" means the iframe, not the seal.
 - `packages/surface/src/plugins.ts` and `packages/surface/src/attach.ts`:
   `attach.ts` is a DIFFERENT list (what a person may hand an agent) and stays;
   check what `plugins.ts` reads and route it through claims.
