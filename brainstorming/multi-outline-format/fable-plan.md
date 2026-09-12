@@ -215,7 +215,13 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   the answer. For parsing, nothing in `chat/src/server.ts` or `chat/src/wire.ts`
   changes: another branch (`chat-sidebar-ux`) is rewriting those files, and
   parsing is the vault's business anyway. The ONE permitted touch of
-  `chat/src/server.ts` is the doorbell's `World` (next item).
+  `chat/src/server.ts` is the doorbell's `World` (next item), which is two
+  lines: `claims: snapshot.value.claims` at the call site, and
+  `readonly claims: Reading["claims"]` on the local `VaultRevision.value`
+  narrowing beside `set` and `derived`. That type is deliberately "as much of
+  the revision as this half reads", so naming a third field is its own rule;
+  do not replace it with the vault's whole `Reading`, which would declare a
+  read of everything.
 - `kolu/src/wake.ts`, `odu/src/wake.ts`, and the doorbell check
   (`chat/src/server/doorbell.ts`'s `faultedIn`, `@olai/surface`'s `watchable`,
   the browser picker that filters by the same reading): `wake.kinds` was a
