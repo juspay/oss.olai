@@ -44,9 +44,14 @@ read its `docs/org2-poc.md` for the list, then close it.
    path can only be told `no row claims `.olai``, because the registry holds
    live claims and nothing maps a suffix to a row that is not there. The row
    IS named where its id is already in hand: the vault's `format` config. So
-   mints refuse naming it, and the trash, inbox, pins and agenda pages, which
-   read the configured outline row off the `file-kinds` cell (below), say
-   `the olai row is off`. No roster lookup and no suffix-to-row table anywhere.
+   mints refuse naming it, and the surfaces that already know a convention
+   and read the configured outline row off the `file-kinds` cell (below) say
+   `the olai row is off`: the `/trash` and `/agenda` pages, which have routes
+   of their own, and the Inbox and Pins SIDEBAR entries, which are where those
+   two conventions live. Ruled: no new routes for Inbox or Pins. Their files
+   open at ordinary addresses, and an ordinary address with no claim is the
+   "nothing by that name" page saying `no row claims `.olai``, like any other.
+   No roster lookup and no suffix-to-row table anywhere.
    The plugins panel gets a `switchHint` saying so. Honest beats safe here.
 
    **Its switch is session-only, like the vault's and the settings reader's.**
@@ -426,10 +431,11 @@ changes meaning while a subscription is open is exactly the drift the wire's
   (session switch; an `on: no` for it written in `_olai/Settings.olai` is
   ignored with the reader-owner warning, and that is a scenario too) lists no
   outlines in the tree, the settings reader reports absent with every other
-  row's applied patch standing; `/trash`, the inbox, pins and the agenda say
-  `the olai row is off` (they read the configured outline row off the claims
-  cell and find no claim under it); an outline's address is the "nothing by
-  that name" page saying `no row claims `.olai``; turning it on restores
+  row's applied patch standing; the `/trash` and `/agenda` pages and the Inbox
+  and Pins sidebar entries say `the olai row is off` (they read the configured
+  outline row off the claims cell and find no claim under it); any outline's
+  address, the Inbox and Pins files included, is the "nothing by that name"
+  page saying `no row claims `.olai``; turning it on restores
   them without reload; a file `notes.org` is never listed; `pdf` off removes
   `.pdf` files from the tree and `/media/` refuses them, and turning it on
   lists them again (ruling 4 applies to every kind row alike: a claimless file
