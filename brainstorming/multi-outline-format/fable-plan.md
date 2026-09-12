@@ -361,17 +361,45 @@ changes meaning while a subscription is open is exactly the drift the wire's
 
 ## Order of work
 
-1. `@olai/format`: `Claims`, `OutlineFormat`, readers take claims. Typecheck
-   goes red everywhere; that is the worklist.
-2. `@olai/plugin-api`: `FileKinds` contract.
-3. Vault: door, settings getter, codec, revalidation, media route.
-4. `olai` row; move parse and write; ops dispatch; conventions by stem; mints.
-5. `git` and `chat` rerouted.
-6. Browser: `vault.files.claims` cell, `files.kinds`, `navigation.pages`.
-7. `markdown` narrowed; four body rows extracted.
-8. Tests, then docs, then `just ci`.
+Ruled: no transitional APIs, and no red step boundary. The order below is
+additive until the switch, and the switch is one step, because dissolving a
+closed union is atomic by nature. A step may be several commits; only the
+step's last commit must be green under `just typecheck-fast-remote` and
+`just test-fast-remote`.
 
-Commit after each step. Each step should leave `just typecheck-fast-remote` green.
+1. **Contracts, additive.** `@olai/plugin-api`: `FileKinds`, `FileClaim`,
+   `ComposedClaim`. `@olai/format`: `OutlineFormat`, `Claim` gains `noun`,
+   `article`, `format?`, and the `Claims` type with its constructor. No reader
+   changes; `FILE_KINDS` still decides everything. Green.
+2. **The door, unread.** Vault: file-kind table in `openViews()`, `FileKinds`
+   offered from `vault-setup`, `VaultSettings.claims` getter, the `file-kinds`
+   cell with `outlineRow`, `vault.files.claims` and `kindOf` in the browser,
+   `vault-revalidation` listening to `changes`. Nothing reads the table yet
+   except its own tests. Green.
+3. **Rows register, unread.** Six rows exist and register their claims on
+   their server half: `olai` with `format` pointing at `@olai/format`'s
+   `parseOutline`/`serializeOutline` (still there; a plugin importing the
+   leaf is allowed), `markdown` narrowed to `.md`, and `hypertext`, `csv`,
+   `image`, `pdf` with server halves only. `olai.yml` gains the `Files`
+   section. The registry is now full and still unread. Green.
+4. **The switch, one step.** Every reader of `FILE_KINDS` becomes a reader of
+   `Claims`; `FILE_KINDS`, `FileKind` the union and its derivatives are
+   deleted in the same step. Codec, ops writer and mints, conventions by stem
+   and the `ambiguous-convention` finding, `address.ts` seam and the ops
+   refusals, media route, `seal.ts` parameter, `wake.kinds`, git via `Ops`,
+   chat via the vault's `outlineDiff`, and every browser caller via
+   `vault.files.kindOf`. `parseOutline` and `serializeOutline` move into the
+   olai row here (the row's `format` now points at its own module). Typecheck
+   going red is this step's worklist; it is green at the step's end. Expect
+   this to be the largest step by far.
+5. **Faces move.** `files.kinds` and `navigation.pages` locations; the four
+   body rows gain their browser halves; markdown's `faces.tsx` and files'
+   `icons.tsx` and `kinds.ts` deleted. Green.
+6. Tests, then docs, then `just ci` on the pushed branch.
+
+Commit inside a step as often as useful; force nothing green mid-step. Steps
+1 to 3 change no behaviour a test can see, which is what makes them safe to
+land first.
 
 ## Cordis checklist
 
@@ -400,6 +428,10 @@ Reviewers read this list against the diff; a line without its test is not done.
 
 - No module-level registry, no default `Claims` that a forgetting caller
   silently gets (`codecFor` argues this for `KindVocabulary`).
+- No transitional compatibility API, however well named. A reader takes
+  `Claims` or it reads `FILE_KINDS`; the two never coexist past step 4, and no
+  shim bridges them in between. The order of work is arranged so none is
+  needed.
 - Do not keep a static suffix list "for the browser". The browser reads the cell.
 - Do not add org, `.jsonl`, or a migration.
 - Do not let a departed kind row leave its files stamped in the store cache as
