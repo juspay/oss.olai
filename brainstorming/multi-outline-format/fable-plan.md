@@ -274,11 +274,13 @@ changes meaning while a subscription is open is exactly the drift the wire's
 "reconnect is a fresh snapshot" rule exists to avoid. Ruled:
 
 - `DocumentPath` is a relative path with `/` separators, no `..` segment, no
-  leading `/`, non-empty. Nothing about suffixes. `AtOutline` is `AtDocument`
-  with its existing `kind: "outline"` address discriminator (an ADDRESS shape,
-  not a file kind; leave the wire vocabulary alone) and no filter; the brand
-  says what the caller CLAIMS, not what the directory holds. `outlineAt`
-  admits it when the claim for its path `holds === "nodes"`.
+  leading `/`, non-empty. Nothing about suffixes. `AtOutline` stays exactly
+  `AtDocument` minus the suffix filter: its discriminator is the inherited
+  `kind: "document"` (an ADDRESS shape, not a file kind; leave the wire
+  vocabulary alone, including the search producers and tests that spell it).
+  The brand says what the caller CLAIMS, not what the directory holds.
+  `outlineAt(claims, at)` admits an `AtDocument` as `AtOutline` when the claim
+  for its path `holds === "nodes"`.
 - Membership is decided where the table is: `claimedOf(claims, path)` and
   `outlineAt(claims, at)` in `address.ts`, returning the branded value or
   `null`, are the only constructors ops and the vault use to admit a path off
