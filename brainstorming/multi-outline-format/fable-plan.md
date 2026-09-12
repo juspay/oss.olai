@@ -14,7 +14,7 @@ the vault's media route reads the table's `fetched` column. After this PR:
 
 | row | status | server half registers | browser half contributes |
 |---|---|---|---|
-| `olai` | new | `.olai`, `holds: nodes`, JSONL `parse` and `serialize` | nothing |
+| `olai` | new | `.olai`, `holds: nodes`, JSONL `parse` and `serialize` | nothing; `outlines` draws every `holds: nodes` kind |
 | `markdown` | existing | `.md`, `holds: text`, `kept` | document face, editor, glyph, noun |
 | `hypertext` | new | `.html`, `text`, unkept, fetched | sealed-frame face, glyph, noun |
 | `csv` | new | `.csv`, `text`, unkept | table face over `vault.files.body`, glyph, noun |
@@ -280,7 +280,13 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   `markdown/src/browser.tsx`, `outlines/src/browser.tsx`, `search/src/browser/KindSelector.tsx`,
   `chat/src/browser/chat/ToolFrame.tsx`, `outlines/src/browser/Nothing.tsx`, `trash/src/Entry.tsx`.
 - `files` owns location `files.kinds`, contribution
-  `{ kind, glyph: () => JSX.Element, noun, article, testid }`, keyed by kind.
+  `{ by: { kind } | { holds }, glyph: () => JSX.Element, noun, article, testid }`,
+  keyed by row id OR by `holds`. Lookup for a path: its claim's kind first,
+  then its claim's `holds`. Ruled: `outlines` contributes once, by
+  `holds: "nodes"`, the outline glyph moved out of files' table; so every
+  node-holding kind, `olai` today and `org` later, is drawn by the row that
+  draws records, and no format row needs a browser half. A body row
+  contributes by its own kind.
   `Files.tsx`, `Rail.tsx` and `fileTree.ts` read it. Every path in `heads` is
   claimed by some row's SERVER half, so the only way a listed path has no glyph
   contribution is that row's BROWSER half being absent (failed to load, or the
@@ -290,7 +296,11 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   off" drawing. `contracts/icons.tsx` and `contracts/kinds.ts` are deleted;
   each glyph moves to its row.
 - `navigation` owns location `navigation.pages`, contribution
-  `{ kind, page: (address) => JSX.Element, edits: boolean }`, keyed by kind.
+  `{ by: { kind } | { holds }, page: (address) => JSX.Element, edits: boolean }`,
+  keyed by row id OR by `holds`, same lookup order as `files.kinds`. `outlines`
+  contributes its tree page once, by `holds: "nodes"`, from its existing
+  `content` component; that is the outline page it already owns, now reached
+  through the location instead of a hard-wired route.
   `routes.ts` picks the page by `kindOf(path)`. A path the directory does not
   hold (its row is off, or nobody ever claimed the suffix; the browser cannot
   tell these apart and must not try) is the existing "the directory holds
@@ -331,7 +341,11 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   registers
   `{ exts: [".olai"], holds: "nodes", kept: true, fetched: false, noun: "outline", article: "an", format }`;
   the registry stamps `kind: "olai"`.
-  No browser half. `@olai/format`'s tests that exercised `parseOutline` and
+  No browser half: a format row encodes records and draws nothing, because
+  `outlines` contributes the glyph and the page for every `holds: "nodes"`
+  claim (`files.kinds` and `navigation.pages` below). That is what makes a
+  later `org` row a server half and a parser, and nothing else.
+  `@olai/format`'s tests that exercised `parseOutline` and
   `serializeOutline` move with them or import the row's pure module (a static
   import of pure functions is allowed by `cordis.md`).
 - `packages/bundle/olai.yml`: new section `Files` holding `olai`, `markdown`,
