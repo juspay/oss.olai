@@ -40,8 +40,13 @@ read its `docs/org2-poc.md` for the list, then close it.
    `navigation`. Kind rows contribute to both on their browser half.
 4. **Unknown suffix means unclaimed file.** No static list of suffixes in core.
    A `.org` on a serve with no org row is not in the set, exactly like `.txt`.
-5. **`olai` can be switched off.** Off: every `.olai` is unclaimed, mints refuse
-   naming the row, the trash, inbox, pins and agenda pages say the row is off.
+5. **`olai` can be switched off.** Off: every `.olai` is unclaimed and a bare
+   path can only be told `no row claims `.olai``, because the registry holds
+   live claims and nothing maps a suffix to a row that is not there. The row
+   IS named where its id is already in hand: the vault's `format` config. So
+   mints refuse naming it, and the trash, inbox, pins and agenda pages, which
+   read the configured outline row off the `file-kinds` cell (below), say
+   `the olai row is off`. No roster lookup and no suffix-to-row table anywhere.
    The plugins panel gets a `switchHint` saying so. Honest beats safe here.
 6. **The `FileKind` closed union goes.** Kind names are strings. The three
    `Record<FileKind, …>` tables in `files/src/contracts/icons.tsx`,
@@ -158,8 +163,9 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
   refusal, same shape as the existing read-back guard.
 - `@olai/ops` `plan.ts` `outlinePath`: takes `mintExt(claims, config.format)`,
   the row id the vault's `format` config names, and checks that claim
-  `holds === "nodes"`; when that row is not claiming, refuse with
-  `the olai row is off, so no outline can be created`. `markdown_create` mints
+  `holds === "nodes"`; when no claim is registered under that id, refuse with
+  `the olai row is off, so no outline can be created` (the id comes from the
+  config, not from any suffix). `markdown_create` mints
   through `mintExt(claims, "markdown")`: the markdown row's own verb may name
   its own row id, since it is the one thing that row knows about itself.
 - `@olai/format` `node.ts` conventions: `TRASH`, `INBOX`, `PINS`, `PROPERTIES`
@@ -199,7 +205,11 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 
 - `vault.files` (`packages/plugins/vault/src/browser/state.ts`, contract
   `contract.ts`) gains `claims: Accessor<Claims>` fed by a new `file-kinds`
-  cell on the vault surface (the table minus `format`), and `kindOf(path)`.
+  cell on the vault surface, and `kindOf(path)`. The cell carries the table
+  minus `format`, plus `outlineRow: string`, the id the vault's `format`
+  config names. A page that wants to say `the olai row is off` checks
+  `claims().byKind.has(outlineRow)`; that is the only way the browser may name
+  a row that is not claiming.
   Every browser caller of `fileKind` goes through it: `navigation/src/routes.ts`,
   `files/src/fileTree.ts`, `files/src/Files.tsx`, `files/src/contracts/completing.ts`,
   `files/src/file/making.ts`, `markdown/src/browser/document-route.ts`,
@@ -218,9 +228,10 @@ table. `Claims` must be a plain value so it can cross the wire minus `format`.
 - `navigation` owns location `navigation.pages`, contribution
   `{ kind, page: (address) => JSX.Element, edits: boolean }`, keyed by kind.
   `routes.ts` picks the page by `kindOf(path)`. A path the directory does not
-  hold (its row is off, or nobody ever claimed the suffix) is the existing
-  "the directory holds nothing by that name" page, which now carries the kind
-  string it was asked for. A path that IS held but whose kind has no page
+  hold (its row is off, or nobody ever claimed the suffix; the browser cannot
+  tell these apart and must not try) is the existing "the directory holds
+  nothing by that name" page, which now adds `no row claims `.org`` when the
+  claims cell has no suffix for it. A path that IS held but whose kind has no page
   contribution mounted (server half claims, browser half absent) draws a page
   saying which row's browser half is missing. Those are the only two cases.
   `markdown/src/browser/document/faces.tsx` is deleted; `DocumentPage.tsx`
@@ -290,10 +301,11 @@ changes meaning while a subscription is open is exactly the drift the wire's
   `outlines_subtree`'s file arm, `outlines_create`, `outlines_move`'s `file`,
   `edit-intents`'s file verbs, `search_nodes`'s file filter) refuses in
   `ops/src/refusals.ts`'s existing `notFound` shape with the sentence
-  `` `notes.org` is not a file this directory serves: no row claims `.org` ``,
-  or, for a suffix a row claims but the row is off,
-  `` `plan.olai` is an outline, and the `olai` row is off ``. The `didYouMean`
-  neighbour list is unchanged. Where a verb needs an outline specifically
+  `` `notes.org` is not a file this directory serves: no row claims `.org` ``.
+  That is the ONLY sentence for an unclaimed path: with the `olai` row off the
+  registry has no `.olai` entry, so `plan.olai` gets the same sentence with
+  `.olai` in it, and nothing may keep a suffix-to-row table to say more. The
+  `didYouMean` neighbour list is unchanged. Where a verb needs an outline specifically
   (`outlines_create` on a `.md`), the refusal is
   `` `notes.md` is a document; this verb takes an outline ``.
 - The MCP tool schemas advertise `DocumentPath` as a plain relative path; the
@@ -318,8 +330,10 @@ changes meaning while a subscription is open is exactly the drift the wire's
 - `packages/bundle/src/fence.test.ts`: the tenancy claims must still hold; the
   new rows import only `@olai/plugin-api`, `@olai/format` and their own package.
 - e2e (`packages/tests/features/`): a vault served with `olai` off lists no
-  outlines in the tree, `/trash` and the inbox say the row is off, and an
-  outline's address is the "nothing by that name" page; turning it on restores
+  outlines in the tree; `/trash`, the inbox, pins and the agenda say
+  `the olai row is off` (they read the configured outline row off the claims
+  cell and find no claim under it); an outline's address is the "nothing by
+  that name" page saying `no row claims `.olai``; turning it on restores
   them without reload; a file `notes.org` is never listed; `pdf` off removes
   `.pdf` files from the tree and `/media/` refuses them, and turning it on
   lists them again (ruling 4 applies to every kind row alike: a claimless file
